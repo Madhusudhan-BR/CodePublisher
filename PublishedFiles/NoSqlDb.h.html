@@ -1,0 +1,340 @@
+<!----------------------------------------------------------------------------../PublishedFiles/NoSqlDb.h.html - output HTML file for Project #3 Published 5 April 2017 Madhusudhan.B.R, CSE687 - Object Oriented Design, Spring 2017-----------------------------------------------------------------------------> <html> <head>
+ 
+    <link rel="stylesheet" type = "text/css"  href="stylesheet.css"/>  
+ <script type="text/javascript" src="script.js"></script></head> <body> <h4>NoSqlDb.h<br> Dependent files : 
+<h4> <a href = "NoSqlDb.h.html">NoSqlDb.h </a> </h4>
+<h4> <a href = "CppProperties.h.html">CppProperties.h </a> </h4>
+<h4> <a href = "Convert.cpp.html">Convert.cpp </a> </h4>
+<h4> <a href = "Utilities.cpp.html">Utilities.cpp </a> </h4>
+<h4> <a href = "GrammarHelpers.cpp.html">GrammarHelpers.cpp </a> </h4>
+<h4> <a href = "XmlElement.h.html">XmlElement.h </a> </h4>
+<h4> <a href = "XmlDocument.h.html">XmlDocument.h </a> </h4>
+<h4> <a href = "XmlElement.cpp.html">XmlElement.cpp </a> </h4>
+<h4> <a href = "ScopeStack.cpp.html">ScopeStack.cpp </a> </h4>
+<h4> <a href = "Test1.cpp.html">Test1.cpp </a> </h4>
+<h4> <a href = "Test1.cpp.html">Test1.cpp </a> </h4>
+<PRE>
+
+#pragma once
+/////////////////////////////////////////////////////////////////////
+// NoSqlDb.h - key/value pair in-memory database                   //
+// ver 1.2                                                         //
+// Madhusudhan, CSE687 - Object Oriented Design, Spring 2017       //
+/////////////////////////////////////////////////////////////////////
+/*
+* Package Operations:
+* -------------------
+* This package defines two classes that support key/value storage:
+* - Element&lt;Data&gt; defines a single value stored in the database.
+*   It provides metadata properties:
+*   - nam
+* - manual information
+* - TestExecutive that demonstrates the requirements you meet
+*
+* Required Files:
+* ---------------
+*   NoSqlDb.h, NoSqlDb.cpp, CppProperties.h, CppProperties.cpp
+*
+* Maintenance History:
+*---------------------
+* ver 1.2 : 06 Feb 2017
+* - added children
+* - modified Element&lt;Data&gt;::show()
+* - added these comments
+* ver 1.1 : 28 Jan 2017
+* - fixed bug in NoSqlDb::count() by replacing
+*   unordered_map&lt;key,Value&gt;::count() with
+*   unordered_map&lt;key,Value&gt;::size();
+* Ver 1.0 : 25 Jan 2017
+* - first release
+*/
+
+#include &lt;unordered_map&gt;
+#include &lt;string&gt;
+#include &lt;sstream&gt;
+#include &lt;vector&gt;
+#include &lt;iomanip&gt;
+#include &lt;iostream&gt;
+#include "../CppProperties/CppProperties.h"
+#include "../DateTime/DateTime.h"
+#include "../XmlDoc/XmlDocument/XmlDocument.h"
+#include "../XmlDoc/XmlElement/XmlElement.h"
+
+
+namespace NoSQLDB
+{
+	using Key = std::string;
+	//using Keys = std::vector&lt;Key&gt;;
+	//using Name = std::string;
+	//using Category = std::string;
+	using Children = std::vector&lt;std::string&gt;;
+
+	/////////////////////////////////////////////////////////////////////
+	// Element class represents a data record in our NoSql database
+	// - in our NoSql database that is just the value in a key/value pair
+	// - it needs to store child data, something for you to implement
+	//
+	template&lt;typename Data&gt;
+	class Element
+	{<button id ="10000"onclick="myFunction0();toggleText0(this.id);">-</button><div id="0">
+	public:
+
+		Element() {}
+
+		Property&lt;Children&gt; children;          // metadata
+
+		void saveChild(Key);
+		std::string show();
+	</div>}};
+
+	template&lt;typename Data&gt;
+	void Element&lt;Data&gt;::saveChild(Key key)
+	{<button id ="10001"onclick="myFunction1();toggleText1(this.id);">-</button><div id="1">
+		children.getValue().push_back(key);
+	</div>}}
+
+
+	template&lt;typename Data&gt;
+	std::string Element&lt;Data&gt;::show()
+	{<button id ="10002"onclick="myFunction2();toggleText2(this.id);">-</button><div id="2">
+		std::ostringstream out;
+		out.setf(std::ios::adjustfield, std::ios::left);
+
+		Children children_ = static_cast&lt;Children&gt;(children);
+		if (children_.size() &gt; 0)
+		{
+			out &lt;&lt; "\n    " &lt;&lt; std::setw(8) &lt;&lt; "children" &lt;&lt; " : ";
+			for (size_t i = 0; i &lt; children_.size(); ++i)
+			{
+				cout &lt;&lt; children_[i];
+				if (i &lt; children_.size())
+					out &lt;&lt; ", ";
+			}
+		}
+		//out &lt;&lt; "\n    " &lt;&lt; std::setw(8) &lt;&lt; "data" &lt;&lt; " : " &lt;&lt; data;
+		out &lt;&lt; "\n";
+		return out.str();
+	</div>}}
+
+	/////////////////////////////////////////////////////////////////////
+	// NoSqlDb class is a key/value pair in-memory database
+	// - stores and retrieves elements
+	// - you will need to add query capability
+	//   That should probably be another class that uses NoSqlDb
+	//
+
+	using namespace XmlProcessing;
+	template&lt;typename Data&gt;
+	class NoSqlDb
+	{<button id ="10003"onclick="myFunction3();toggleText3(this.id);">-</button><div id="3">
+	public:
+		using Key = std::string;
+		using Keys = std::vector&lt;Key&gt;;
+		using sPtr = std::shared_ptr&lt;AbstractXmlElement&gt;;
+		using xmlString = std::string;
+		using xml = std::string;
+		using allTheKeys = std::vector&lt;std::string&gt;;
+
+		//std::string path;
+		Keys keys();
+		std::string toXML(std::string depxml);
+		std::string toXMLSCC(std::string sccxml);
+		bool hasKey(Key key);
+		bool saveRecord(Key key, Element&lt;Data&gt; elem);
+		bool saveValue(Key key, Element&lt;Data&gt; elem);
+		bool removeRecord(Key key);
+		Element&lt;Data&gt; value(Key key);
+		size_t count();
+
+
+
+	private:
+		using Item = std::pair&lt;Key, Element&lt;Data&gt;&gt;;
+
+		std::unordered_map&lt;Key, Element&lt;Data&gt;&gt; store;
+	</div>}};
+
+	//------------------------&lt;FUnction to output DB in XML file&gt;----------------------------------------//
+
+	template&lt;typename Data&gt;
+	std::string NoSqlDb&lt;Data&gt;::toXML(std::string depxml) {<button id ="10004"onclick="myFunction4();toggleText4(this.id);">-</button><div id="4">
+
+	std::string document;
+	XmlDocument doc;
+	allTheKeys allKeys = keys();
+
+	sPtr pRoot = makeTaggedElement("Database");
+	doc.docElement() = pRoot;
+
+	for (xml element : allKeys) {
+	Element&lt;Data&gt; ele = value(element);
+	sPtr theRecord = makeTaggedElement("Record");
+	pRoot-&gt;addChild(theRecord);
+
+	sPtr keyElement = makeTaggedElement("Key");
+	sPtr keyText = makeTextElement(element);
+	theRecord-&gt;addChild(keyElement);
+	keyElement-&gt;addChild(keyText);
+
+	std::vector&lt;std::string&gt; dependentKeys = ele.children;
+
+	int counter = (int)dependentKeys.size(), i = 0;
+
+	sPtr RecordChild = makeTaggedElement("Children");
+	theRecord-&gt;addChild(RecordChild);
+
+	for (int i = 0; i &lt; counter; i++) {
+	xml child = dependentKeys[i];
+	sPtr pchildelement = makeTaggedElement("child");
+	RecordChild-&gt;addChild(pchildelement);
+	sPtr pchildText = makeTextElement(child);
+	pchildelement-&gt;addChild(pchildText);
+	}
+	}
+	document = doc.toString();
+
+	std::ofstream inputfile(depxml);
+	inputfile &lt;&lt; document;
+	inputfile.close();
+
+	return document;
+	</div>}}
+	
+	//------------------------&lt;Function that outputs SCC in the from of a XML file&gt;----------------------------------------//
+
+
+	template&lt;typename Data&gt;
+	std::string NoSqlDb&lt;Data&gt;::toXMLSCC(std::string sccxml) {<button id ="10005"onclick="myFunction5();toggleText5(this.id);">-</button><div id="5">
+
+		std::string document;
+		XmlDocument doc;
+		allTheKeys allKeys = keys();
+
+		sPtr pRoot = makeTaggedElement("Database");
+		doc.docElement() = pRoot;
+
+		for (xml element : allKeys) {
+			Element&lt;Data&gt; ele = value(element);
+			sPtr theRecord = makeTaggedElement("Record");
+			pRoot-&gt;addChild(theRecord);
+
+			/*sPtr keyElement = makeTaggedElement("Key");
+			sPtr keyText = makeTextElement(element);
+			theRecord-&gt;addChild(keyElement);
+			keyElement-&gt;addChild(keyText);*/
+		
+
+			std::vector&lt;std::string&gt; dependentKeys = ele.children;
+
+			int counter = (int)dependentKeys.size(), i = 0;
+
+			sPtr RecordChild = makeTaggedElement("Children");
+			theRecord-&gt;addChild(RecordChild);
+
+			for (int i = 0; i &lt; counter; i++) {
+				xml child = dependentKeys[i];
+				sPtr pchildelement = makeTaggedElement("child");
+				RecordChild-&gt;addChild(pchildelement);
+				sPtr pchildText = makeTextElement(child);
+				pchildelement-&gt;addChild(pchildText);
+			}
+		}
+		document = doc.toString();
+
+		std::ofstream inputfile(sccxml);
+		inputfile &lt;&lt; document;
+		inputfile.close();
+
+		return document;
+	</div>}}
+	//------------------------&lt;returns keys&gt;----------------------------------------//
+
+	template&lt;typename Data&gt;
+	typename NoSqlDb&lt;Data&gt;::Keys NoSqlDb&lt;Data&gt;::keys()
+	{<button id ="10006"onclick="myFunction6();toggleText6(this.id);">-</button><div id="6">
+		Keys keys;
+		for (Item item : store)
+		{
+			keys.push_back(item.first);
+		}
+		return keys;
+	</div>}}
+	//------------------------&lt;Chwcks for a key&gt;----------------------------------------//
+
+	template&lt;typename Data&gt;
+	bool NoSqlDb&lt;Data&gt;::hasKey(Key key)
+	{<button id ="10007"onclick="myFunction7();toggleText7(this.id);">-</button><div id="7">
+		if (store.find(key) == store.end())
+			return false;
+		return true;
+	</div>}}
+	//------------------------&lt;Saves record into DB&gt;----------------------------------------//
+
+	template&lt;typename Data&gt;
+	bool NoSqlDb&lt;Data&gt;::saveRecord(Key key, Element&lt;Data&gt; elem)
+	{<button id ="10008"onclick="myFunction8();toggleText8(this.id);">-</button><div id="8">
+		if (store.find(key) != store.end())
+			return false;
+		store[key] = elem;
+		return true;
+	</div>}}
+	//------------------------&lt;Removes record from DB&gt;----------------------------------------//
+
+	template&lt;typename Data&gt;
+	bool NoSqlDb&lt;Data&gt;::removeRecord(Key key)
+	{<button id ="10009"onclick="myFunction9();toggleText9(this.id);">-</button><div id="9">
+		if (store.find(key) == store.end())
+			return false;
+		size_t numErased = store.erase(key);
+		if (numErased == 1)
+		{
+			// remove key from all other element's children collections
+			for (Key k : keys())
+			{
+				Keys& children = store[k].children.getValue();  // note Keys& - we don't want copy of children
+				Keys::iterator iter;
+				for (iter = children.begin(); iter != children.end(); ++iter)
+				{
+					if ((*iter) == key)
+					{
+						children.erase(iter);
+						break;
+					}
+				}
+			}
+			return true;
+		}
+		return false;
+	</div>}}
+	//------------------------&lt;Saves record into DB&gt;----------------------------------------//
+
+	template&lt;typename Data&gt;
+	bool NoSqlDb&lt;Data&gt;::saveValue(Key key, Element&lt;Data&gt; elem)
+	{<button id ="10010"onclick="myFunction10();toggleText10(this.id);">-</button><div id="10">
+		if (store.find(key) == store.end())
+			return false;
+		store[key] = elem;
+		return true;
+	</div>}}
+
+	//------------------------&lt;Retreives value of a particular key&gt;----------------------------------------//
+
+	template&lt;typename Data&gt;
+	Element&lt;Data&gt; NoSqlDb&lt;Data&gt;::value(Key key)
+	{<button id ="10011"onclick="myFunction11();toggleText11(this.id);">-</button><div id="11">
+		if (store.find(key) != store.end())
+			return store[key];
+		return Element&lt;Data&gt;();
+	</div>}}
+	//------------------------&lt;returns no of records in the DB&gt;----------------------------------------//
+
+	template&lt;typename Data&gt;
+	size_t NoSqlDb&lt;Data&gt;::count()
+	{<button id ="10012"onclick="myFunction12();toggleText12(this.id);">-</button><div id="12">
+		return store.size();
+	</div>}}
+
+
+
+}
+</PRE> </body> </html>

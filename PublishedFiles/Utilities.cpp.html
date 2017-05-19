@@ -1,0 +1,125 @@
+<!----------------------------------------------------------------------------../PublishedFiles/Utilities.cpp.html - output HTML file for Project #3 Published 5 April 2017 Madhusudhan.B.R, CSE687 - Object Oriented Design, Spring 2017-----------------------------------------------------------------------------> <html> <head>
+ 
+    <link rel="stylesheet" type = "text/css"  href="stylesheet.css"/>  
+ <script type="text/javascript" src="script.js"></script></head> <body> <h4>Utilities.cpp<br> Dependent files : 
+<h4> <a href = "Convert.cpp.html">Convert.cpp </a> </h4>
+<h4> <a href = "Utilities.cpp.html">Utilities.cpp </a> </h4>
+<h4> <a href = "Utilities.h.html">Utilities.h </a> </h4>
+<h4> <a href = "Utilities.h.html">Utilities.h </a> </h4>
+<h4> <a href = "FileSystem.cpp.html">FileSystem.cpp </a> </h4>
+<h4> <a href = "XmlElement.cpp.html">XmlElement.cpp </a> </h4>
+<h4> <a href = "Utilities.cpp.html">Utilities.cpp </a> </h4>
+<h4> <a href = "Cpp11-BlockingQueue.cpp.html">Cpp11-BlockingQueue.cpp </a> </h4>
+<h4> <a href = "FileSystemTest.cpp.html">FileSystemTest.cpp </a> </h4>
+<h4> <a href = "GrammarHelpers.cpp.html">GrammarHelpers.cpp </a> </h4>
+<h4> <a href = "Test1.cpp.html">Test1.cpp </a> </h4>
+<h4> <a href = "Test1.cpp.html">Test1.cpp </a> </h4>
+<PRE>
+
+///////////////////////////////////////////////////////////////////////
+// Utilities.cpp - small, generally usefule, helper classes          //
+// ver 1.2                                                           //
+// Language:    C++, Visual Studio 2015                              //
+// Application: Most Projects, CSE687 - Object Oriented Design       //
+// Author:      Jim Fawcett, Syracuse University, CST 4-187          //
+//              jfawcett@twcny.rr.com                                //
+///////////////////////////////////////////////////////////////////////
+
+#include &lt;cctype&gt;
+#include &lt;iostream&gt;
+#include "Utilities.h"
+
+using namespace Utilities;
+
+std::function&lt;void(const std::string&)&gt; Title =
+  [](auto src) { StringHelper::Title(src, '='); };
+
+std::function&lt;void(const std::string&)&gt; title =
+  [](auto src) { StringHelper::Title(src, '-'); };
+
+void StringHelper::title(const std::string& src)
+{<button id ="10000"onclick="myFunction0();toggleText0(this.id);">-</button><div id="0">
+  std::cout &lt;&lt; "\n  " &lt;&lt; src;
+  std::cout &lt;&lt; "\n " &lt;&lt; std::string(src.size() + 2, '-');
+</div>}}
+
+void StringHelper::Title(const std::string& src, char underline)
+{<button id ="10001"onclick="myFunction1();toggleText1(this.id);">-</button><div id="1">
+  std::cout &lt;&lt; "\n  " &lt;&lt; src;
+  std::cout &lt;&lt; "\n " &lt;&lt; std::string(src.size() + 2, underline);
+</div>}}
+
+std::vector&lt;std::string&gt; StringHelper::split(const std::string& src)
+{<button id ="10002"onclick="myFunction2();toggleText2(this.id);">-</button><div id="2">
+  std::vector&lt;std::string&gt; accum;
+  std::string temp;
+  size_t index = 0;
+  do
+  {
+    while ((isspace(src[index]) || src[index] == ',') && src[index] != '\n')
+    {
+      ++index;
+      if (temp.size() &gt; 0)
+      {
+        accum.push_back(temp);
+        temp.clear();
+      }
+    }
+    if(src[index] != '\0')
+      temp += src[index];
+  } while (index++ &lt; src.size());
+  if(temp.size() &gt; 0)
+    accum.push_back(temp);
+  return accum;
+</div>}}
+
+void Utilities::putline()
+{<button id ="10003"onclick="myFunction3();toggleText3(this.id);">-</button><div id="3">
+  std::cout &lt;&lt; "\n";
+</div>}}
+
+#ifdef TEST_UTILITIES
+
+int main()
+{<button id ="10004"onclick="myFunction4();toggleText4(this.id);">-</button><div id="4">
+  Title("Testing Utilities Package");
+  putline();
+
+  title("test StringHelper::split(std::string)");
+
+  std::string test = "a, \n, bc, de, efg, i, j k lm nopq rst";
+  std::cout &lt;&lt; "\n  test string = " &lt;&lt; test;
+  
+  std::vector&lt;std::string&gt; result = StringHelper::split(test);
+  
+  std::cout &lt;&lt; "\n";
+  for (auto item : result)
+  {
+    if (item == "\n")
+      std::cout &lt;&lt; "\n  " &lt;&lt; "newline";
+    else
+      std::cout &lt;&lt; "\n  " &lt;&lt; item;
+  }
+  std::cout &lt;&lt; "\n";
+
+  title("test std::string Converter&lt;T&gt;::toString(T)");
+
+  std::string conv1 = Converter&lt;double&gt;::toString(3.1415927);
+  std::string conv2 = Converter&lt;int&gt;::toString(73);
+  std::string conv3 = Converter&lt;std::string&gt;::toString("a_test_string plus more");
+
+  std::cout &lt;&lt; "\n  Converting from values to strings: ";
+  std::cout &lt;&lt; conv1 &lt;&lt; ", " &lt;&lt; conv2 &lt;&lt; ", " &lt;&lt; conv3;
+  putline();
+
+  title("test T Converter&lt;T&gt;::toValue(std::string)");
+
+  std::cout &lt;&lt; "\n  Converting from strings to values: ";
+  std::cout &lt;&lt; Converter&lt;double&gt;::toValue(conv1) &lt;&lt; ", ";
+  std::cout &lt;&lt; Converter&lt;int&gt;::toValue(conv2) &lt;&lt; ", ";
+  std::cout &lt;&lt; Converter&lt;std::string&gt;::toValue(conv3);
+
+  std::cout &lt;&lt; "\n\n";
+  return 0;
+</div>}}
+#endif</PRE> </body> </html>

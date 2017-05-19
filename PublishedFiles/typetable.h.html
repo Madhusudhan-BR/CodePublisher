@@ -1,0 +1,220 @@
+<!----------------------------------------------------------------------------../PublishedFiles/typetable.h.html - output HTML file for Project #3 Published 5 April 2017 Madhusudhan.B.R, CSE687 - Object Oriented Design, Spring 2017-----------------------------------------------------------------------------> <html> <head>
+ 
+    <link rel="stylesheet" type = "text/css"  href="stylesheet.css"/>  
+ <script type="text/javascript" src="script.js"></script></head> <body> <h4>typetable.h<br> Dependent files : 
+<h4> <a href = "typetable.h.html">typetable.h </a> </h4>
+<h4> <a href = "AbstrSynTree.h.html">AbstrSynTree.h </a> </h4>
+<h4> <a href = "Convert.cpp.html">Convert.cpp </a> </h4>
+<h4> <a href = "Utilities.cpp.html">Utilities.cpp </a> </h4>
+<h4> <a href = "ScopeStack.h.html">ScopeStack.h </a> </h4>
+<h4> <a href = "Tokenizer.h.html">Tokenizer.h </a> </h4>
+<h4> <a href = "Tokenizer.h.html">Tokenizer.h </a> </h4>
+<h4> <a href = "ActionsAndRules.h.html">ActionsAndRules.h </a> </h4>
+<h4> <a href = "Cpp11-BlockingQueue.cpp.html">Cpp11-BlockingQueue.cpp </a> </h4>
+<h4> <a href = "FileSystemTest.cpp.html">FileSystemTest.cpp </a> </h4>
+<h4> <a href = "GrammarHelpers.cpp.html">GrammarHelpers.cpp </a> </h4>
+<h4> <a href = "Utilities.h.html">Utilities.h </a> </h4>
+<h4> <a href = "FileSystem.h.html">FileSystem.h </a> </h4>
+<h4> <a href = "ScopeStack.cpp.html">ScopeStack.cpp </a> </h4>
+<h4> <a href = "Display.h.html">Display.h </a> </h4>
+<PRE>
+
+
+#pragma once
+/////////////////////////////////////////////////////////////////////
+// typetable.h   - Test EXecutive showing requirements met.        //
+// ver 1                                                           //
+//-----------------------------------------------------------------//
+// Madhusudhan B R SUID-914198627                                  //
+// All rights granted provided this copyright notice is retained   //
+//-----------------------------------------------------------------//
+// Language:    C++, Visual Studio 2015                            //
+// Platform:    Mac 15inch   , Windows 10                          //
+// Application: Project #2, CSE687 - Object Oriented Design, S2017 //
+// Author:      Madhusudhan.B.R, Syracuse University.		       //
+//									                               //
+/////////////////////////////////////////////////////////////////////
+/*
+* Package Operations:
+* -------------------
+* This package defines one class that has doTypeAnalysis function
+* that does dependency analysis and stores it in the DB. I am populating the typetable in the DFS function
+*
+*
+* - manual information
+* - maintenance information
+*
+*
+*
+*
+* Required Files:
+* ---------------
+*tokeniser.h,semiExp.h,abstractSyntaxTree.h,parser.h
+*
+* Maintenance History:
+*---------------------
+* ver 1.0 : 03-10-2017
+** var 2.0  05-04-2017
+* Functionality extended for project 3
+*
+*
+*
+*
+*
+*
+*
+* - first release
+*/
+#pragma warning(disable : 4503)
+#include "../NoSqlDb/NoSqlDb.h"
+#include "../Display/Display.h"
+#include "../Parser/ActionsAndRules.h"
+#include "../CppProperties/CppProperties.h"
+#include &lt;iostream&gt;
+#include &lt;functional&gt;
+#include &lt;stack&gt;
+#pragma warning (disable : 4101) 
+// disable warning re unused variable x, below
+
+
+using typetable = std::unordered_map&lt;std::string, std::vector&lt;std::unordered_map&lt;std::string, std::string&gt;&gt;&gt;;
+namespace CodeAnalysis
+{
+	class lineNum {<button id ="10000"onclick="myFunction0();toggleText0(this.id);">-</button><div id="0">
+	public:
+		int startline=0;
+		int endline=0;
+</div>}};
+
+	class TypeAnal
+	{<button id ="10001"onclick="myFunction1();toggleText1(this.id);">-</button><div id="1">
+	public:
+		using SPtr = std::shared_ptr&lt;ASTNode*&gt;;
+		typetable db;
+		std::unordered_map&lt;std::string, std::vector&lt;lineNum&gt;&gt; collapseDB;
+		std::vector&lt;int&gt; tempLineCountVec;
+		void collapse(ASTNode* pNode);
+		std::stack&lt;std::string&gt; namespaceStack;
+		TypeAnal();
+		void doTypeAnal();
+		//NoSqlDb &lt; std::string&gt; db;
+		//int i = 0;
+		//std::vector&lt;std::string&gt; getKeys(typetable &db);
+	private:
+		void DFS(ASTNode* pNode);
+		AbstrSynTree& ASTref_;
+		ScopeStack&lt;ASTNode*&gt; scopeStack_;
+		Scanner::Toker& toker_;
+	</div>}};
+
+
+	inline TypeAnal::TypeAnal() :
+		ASTref_(Repository::getInstance()-&gt;AST()),
+		scopeStack_(Repository::getInstance()-&gt;scopeStack()),
+		toker_(*(Repository::getInstance()-&gt;Toker()))
+	{
+		std::function&lt;void()&gt; test = [] { int x; };  // This is here to test detection of lambdas.
+	}                                              // It doesn't do anything useful for dep anal.
+
+//&lt;---------------------------------- Displays class struct enum alias and typedef-------------------&gt;
+	inline bool doDisplay(ASTNode* pNode)
+	{<button id ="10002"onclick="myFunction2();toggleText2(this.id);">-</button><div id="2">
+		static std::string toDisplay[] = {
+			"class", "struct", "enum", "alias", "typedef"
+		};
+		for (std::string type : toDisplay)
+		{
+			if (pNode-&gt;type_ == type)
+				return true;
+		}
+		return false;
+	</div>}}
+	//&lt;---------------------------------- Traverses the dfs tree and populates the typetable-------------------&gt;
+	inline void TypeAnal::DFS(ASTNode* pNode)
+	{<button id ="10003"onclick="myFunction3();toggleText3(this.id);">-</button><div id="3">
+		int i = 0;
+		i++;
+		static std::string path = "";
+		if (pNode-&gt;path_ != path)
+		{
+			std::cout &lt;&lt; "\n    -- " &lt;&lt; "  This is the path  " &lt;&lt; pNode-&gt;path_ &lt;&lt; "\\ This is the package " &lt;&lt; pNode-&gt;package_;
+			path = pNode-&gt;path_;
+		}
+collapse(pNode);
+if (pNode-&gt;type_ == "namespace") {
+		namespaceStack.push(pNode-&gt;name_);
+}
+		if (doDisplay(pNode))
+		{
+			std::cout &lt;&lt; "\n  " &lt;&lt; " this is the name " &lt;&lt; pNode-&gt;name_;
+			std::cout &lt;&lt; ", " &lt;&lt; "this is the type   " &lt;&lt; pNode-&gt;type_;
+			std::unordered_map&lt;std::string, std::string&gt; keyValue;
+			keyValue["namespace"] = namespaceStack.top();
+			keyValue["type"] = pNode-&gt;type_;
+			keyValue["file"] = pNode-&gt;path_;
+			std::vector&lt;std::unordered_map&lt;std::string, std::string&gt;&gt; element = db[pNode-&gt;name_];
+			element.push_back(keyValue);
+			db[pNode-&gt;name_] = element;
+		}
+		if ((pNode-&gt;type_ == "namespace") && (pNode-&gt;name_ == "Global Namespace")) {
+			for (auto pchild : pNode-&gt;children_) {
+				if (pchild-&gt;type_ == "function" && (pchild-&gt;name_ != "main")) {
+					std::unordered_map&lt;std::string, std::string&gt; keyValue;
+					keyValue["namespace"] = pNode-&gt;name_;
+					keyValue["type"] = pchild-&gt;type_;
+					keyValue["file"] = pchild-&gt;path_;
+					std::vector&lt;std::unordered_map&lt;std::string, std::string&gt;&gt; element = db[pchild-&gt;name_];
+					element.push_back(keyValue);
+					db[pchild-&gt;name_] = element;
+				}}}
+		
+			for (auto pChild : pNode-&gt;children_)
+		{
+			if (pChild-&gt;parentType_ == "namespace") {
+				namespaceStack.push(pNode-&gt;name_);
+			}
+			DFS(pChild);
+			if (pChild-&gt;parentType_ == "namespace") {
+				namespaceStack.pop();
+</div>}}</div>}}</div>}}
+
+
+	//&lt;---------------------------------- gets AST root and calls DFS-------------------&gt;
+	inline void TypeAnal::doTypeAnal()
+	{<button id ="10004"onclick="myFunction4();toggleText4(this.id);">-</button><div id="4">
+
+
+		std::cout &lt;&lt; "\n  starting type analysis:\n";
+		std::cout &lt;&lt; "\n  scanning AST and displaying important things:";
+		std::cout &lt;&lt; "\n -----------------------------------------------";
+		ASTNode* pRoot = ASTref_.root();
+		DFS(pRoot);
+		//std::cout &lt;&lt; "\n\n  the rest is for you to complete\n";
+
+		displayTypeTable(db);
+		
+	</div>}}
+
+/*-----------------------This function captures the start and end line numbers whereever we find a class or a function*/
+	inline void TypeAnal::collapse(ASTNode* pNode) {<button id ="10005"onclick="myFunction5();toggleText5(this.id);">-</button><div id="5">
+		
+		if (pNode-&gt;type_ == "function" || pNode-&gt;type_ == "class") {
+			if (pNode-&gt;startLineCount_ == pNode-&gt;endLineCount_ || pNode-&gt;endLineCount_ == pNode-&gt;startLineCount_ + 1) {
+				;
+			}
+			else {
+				lineNum tempLine;
+				std::vector&lt;lineNum&gt; lineVect;
+				tempLine.startline = (int)pNode-&gt;startLineCount_;
+				tempLine.endline = (int)pNode-&gt;endLineCount_;
+				lineVect = collapseDB[pNode-&gt;package_];
+				lineVect.push_back(tempLine);
+				collapseDB[pNode-&gt;package_] = lineVect;
+			}
+			
+
+		}
+		return;
+
+	</div>}}
+}</PRE> </body> </html>

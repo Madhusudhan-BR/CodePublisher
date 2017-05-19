@@ -1,0 +1,96 @@
+<!----------------------------------------------------------------------------../PublishedFiles/Utilities.h.html - output HTML file for Project #3 Published 5 April 2017 Madhusudhan.B.R, CSE687 - Object Oriented Design, Spring 2017-----------------------------------------------------------------------------> <html> <head>
+ 
+    <link rel="stylesheet" type = "text/css"  href="stylesheet.css"/>  
+ <script type="text/javascript" src="script.js"></script></head> <body> <h4>Utilities.h<br> Dependent files : 
+<h4> <a href = "Utilities.h.html">Utilities.h </a> </h4>
+<h4> <a href = "Utilities.h.html">Utilities.h </a> </h4>
+<h4> <a href = "Convert.cpp.html">Convert.cpp </a> </h4>
+<h4> <a href = "Utilities.cpp.html">Utilities.cpp </a> </h4>
+<h4> <a href = "FileSystem.cpp.html">FileSystem.cpp </a> </h4>
+<h4> <a href = "XmlElement.cpp.html">XmlElement.cpp </a> </h4>
+<h4> <a href = "Utilities.cpp.html">Utilities.cpp </a> </h4>
+<h4> <a href = "Test1.cpp.html">Test1.cpp </a> </h4>
+<h4> <a href = "Test1.cpp.html">Test1.cpp </a> </h4>
+<PRE>
+
+#ifndef UTILITIES_H
+#define UTILITIES_H
+///////////////////////////////////////////////////////////////////////
+// Utilities.h - small, generally useful, helper classes             //
+// ver 1.2                                                           //
+// Language:    C++, Visual Studio 2015                              //
+// Application: Most Projects, CSE687 - Object Oriented Design       //
+// Author:      Jim Fawcett, Syracuse University, CST 4-187          //
+//              jfawcett@twcny.rr.com                                //
+///////////////////////////////////////////////////////////////////////
+/*
+* Package Operations:
+* -------------------
+* This package provides classes StringHelper and Converter and a global
+* function putline().  This class will be extended continuously for 
+* awhile to provide convenience functions for general C++ applications.
+*
+* Build Process:
+* --------------
+* Required Files: Utilities.h, Utilities.cpp
+*
+* Build Command: devenv Utilities.sln /rebuild debug
+*
+* Maintenance History:
+* --------------------
+* ver 1.2 : 22 Feb 2015
+* - changed default underline char in Title(const std::string&, Char)
+* ver 1.1 : 06 Feb 2015
+* - fixed bug in split which turns a comma separated string into
+*   a vector of tokens.
+* - added comments
+* ver 1.0 : 05 Feb 2016
+* - first release
+*
+* Planned Additions and Changes:
+* ------------------------------
+* - none yet
+*/
+#include &lt;string&gt;
+#include &lt;vector&gt;
+#include &lt;sstream&gt;
+#include &lt;functional&gt;
+
+namespace Utilities
+{
+  class StringHelper
+  {<button id ="10000"onclick="myFunction0();toggleText0(this.id);">-</button><div id="0">
+  public:
+    static std::vector&lt;std::string&gt; split(const std::string& src);
+    static void Title(const std::string& src, char underline = '=');
+    static void title(const std::string& src);
+  </div>}};
+
+  void putline();
+
+  template &lt;typename T&gt;
+  class Converter
+  {<button id ="10001"onclick="myFunction1();toggleText1(this.id);">-</button><div id="1">
+  public:
+    static std::string toString(const T& t);
+    static T toValue(const std::string& src);
+  </div>}};
+
+  template &lt;typename T&gt;
+  std::string Converter&lt;T&gt;::toString(const T& t)
+  {<button id ="10002"onclick="myFunction2();toggleText2(this.id);">-</button><div id="2">
+    std::ostringstream out;
+    out &lt;&lt; t;
+    return out.str();
+  </div>}}
+
+  template&lt;typename T&gt;
+  T Converter&lt;T&gt;::toValue(const std::string& src)
+  {<button id ="10003"onclick="myFunction3();toggleText3(this.id);">-</button><div id="3">
+    std::istringstream in(src);
+    T t;
+    in &gt;&gt; t;
+    return t;
+  </div>}}
+}
+#endif</PRE> </body> </html>

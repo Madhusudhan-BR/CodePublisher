@@ -1,0 +1,143 @@
+<!----------------------------------------------------------------------------../PublishedFiles/dependencyAnalysis.h.html - output HTML file for Project #3 Published 5 April 2017 Madhusudhan.B.R, CSE687 - Object Oriented Design, Spring 2017-----------------------------------------------------------------------------> <html> <head>
+ 
+    <link rel="stylesheet" type = "text/css"  href="stylesheet.css"/>  
+ <script type="text/javascript" src="script.js"></script></head> <body> <h4>dependencyAnalysis.h<br> Dependent files : 
+<h4> <a href = "Utilities.h.html">Utilities.h </a> </h4>
+<h4> <a href = "Utilities.h.html">Utilities.h </a> </h4>
+<h4> <a href = "FileSystem.h.html">FileSystem.h </a> </h4>
+<h4> <a href = "dependencyAnalysis.h.html">dependencyAnalysis.h </a> </h4>
+<h4> <a href = "typetable.h.html">typetable.h </a> </h4>
+<h4> <a href = "NoSqlDb.h.html">NoSqlDb.h </a> </h4>
+<h4> <a href = "htmlparsing.h.html">htmlparsing.h </a> </h4>
+<h4> <a href = "Tokenizer.h.html">Tokenizer.h </a> </h4>
+<h4> <a href = "Tokenizer.h.html">Tokenizer.h </a> </h4>
+<PRE>
+
+#pragma once
+/////////////////////////////////////////////////////////////////////
+// DependencyAnalysis.h -								           //
+// ver 1                                                           //
+//-----------------------------------------------------------------//
+// Madhusudhan B R SUID-914198627                                  //
+// All rights granted provided this copyright notice is retained   //
+//-----------------------------------------------------------------//
+// Language:    C++, Visual Studio 2015                            //
+// Platform:    Mac 15inch   , Windows 10                          //
+// Application: Project #2, CSE687 - Object Oriented Design, S2017 //
+// Author:      Madhusudhan.B.R, Syracuse University.		       //
+//									                               //
+/////////////////////////////////////////////////////////////////////
+/*
+* Package Operations:
+* -------------------
+* This package defines one class that has dependencyAnalysis function
+* that does dependency analysis and stores it in the DB
+*   
+*   
+* - manual information
+* - maintenance information
+* 
+* 
+* 
+*
+* Required Files:
+* ---------------
+*   
+*
+* Maintenance History:
+*---------------------
+* ver 1.0 : 03-10-2017
+* 
+* 
+* 
+* 
+* 
+*   
+*   
+* 
+* - first release
+*/
+#pragma warning(disable : 4503)
+#include &lt;iostream&gt;
+#include &lt;locale&gt;
+#include &lt;string&gt;
+#include &lt;vector&gt;
+#include "../Tokenizer/Tokenizer.h"
+#include "../Utilities/Utilities.h"
+#include "../TypeTable/typetable.h"
+#include "../NoSqlDb/NoSqlDb.h"
+#include "../FileMgr/FileMgr.h"
+#include "../FileSystem/FileSystem.h"
+#include "../HtmlParsing/htmlparsing.h"
+
+using Helper = Utilities::StringHelper;
+using namespace Utilities;
+using File = std::string;
+using Files = std::vector&lt;File&gt;;
+
+//------------------------&lt;Class that has functions for dependency analysis&gt;----------------------------------------//
+class dependencyAnalysis {<button id ="10000"onclick="myFunction0();toggleText0(this.id);">-</button><div id="0">
+	CodeAnalysis::TypeAnal a;
+	//dependencyAnalysis(); 
+public: NoSQLDB::NoSqlDb&lt;std::string&gt; getAccess(CodeAnalysis::TypeAnal &ta, Files allfiles);
+		NoSQLDB::NoSqlDb&lt;std::string&gt; depAnal(CodeAnalysis::TypeAnal &ta, Files allfiles);
+		
+</div>}};
+
+//------------------------&lt;Function that perfroms depencency Analysis&gt;----------------------------------------//
+
+NoSQLDB::NoSqlDb&lt;std::string&gt; dependencyAnalysis::depAnal(CodeAnalysis::TypeAnal &ta, Files allfiles) {<button id ="10001"onclick="myFunction1();toggleText1(this.id);">-</button><div id="1">
+
+	CodeAnalysis::TypeAnal ta_ = ta;
+	NoSQLDB::NoSqlDb&lt;std::string&gt; table = getAccess(ta_, allfiles);
+
+	//CodeAnalysis::TypeAnal t;
+
+	return table;
+</div>}}
+//------------------------&lt;Function that gets access to typetable and performs dependency analysis&gt;----------------------------------------//
+
+NoSQLDB::NoSqlDb&lt;std::string&gt;  dependencyAnalysis::getAccess(CodeAnalysis::TypeAnal &ta, Files allfiles) {<button id ="10002"onclick="myFunction2();toggleText2(this.id);">-</button><div id="2">
+
+	NoSQLDB::NoSqlDb&lt;std::string&gt; dependencyTable;
+	NoSQLDB::Element&lt;std::string&gt; ele; 
+	htmlHandle html; 
+	for (File f : allfiles) {
+		try{
+			std::ifstream in(f);
+			if (!in.good())
+			{
+				std::cout &lt;&lt; "\n  can't open " &lt;&lt; f &lt;&lt; "\n\n";
+			}
+			{	int i = 0;
+				Scanner::Toker toker;
+				std::vector&lt;std::string&gt; depFileVect;
+				toker.attach(&in);
+				do
+				{
+					std::string tok = toker.getTok();
+					std::vector&lt;std::string&gt; emptyVect;
+					if (ta.db.find(tok) != ta.db.end()) {
+						std::vector&lt;std::unordered_map&lt;std::string, std::string&gt;&gt; mapVect = ta.db[tok];
+					for (auto tt : mapVect) {
+						bool flag = true;
+							for (auto x : depFileVect) {
+								if (x == tt["file"])
+									flag = false;
+							}
+							if(flag)
+							depFileVect.push_back(tt["file"]);
+						}}
+				} while (in.good());
+				ele.children = depFileVect;
+				dependencyTable.saveRecord(f, ele);
+				}}
+		catch (std::logic_error& ex){
+			std::cout &lt;&lt; "\n  " &lt;&lt; ex.what();}
+		std::cout &lt;&lt; "\n";
+}	
+	return dependencyTable;
+</div>}}
+
+
+</PRE> </body> </html>

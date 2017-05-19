@@ -1,0 +1,1225 @@
+<!----------------------------------------------------------------------------../PublishedFiles/FileSystem.cpp.html - output HTML file for Project #3 Published 5 April 2017 Madhusudhan.B.R, CSE687 - Object Oriented Design, Spring 2017-----------------------------------------------------------------------------> <html> <head>
+ 
+    <link rel="stylesheet" type = "text/css"  href="stylesheet.css"/>  
+ <script type="text/javascript" src="script.js"></script></head> <body> <h4>FileSystem.cpp<br> Dependent files : 
+<h4> <a href = "FileSystem.cpp.html">FileSystem.cpp </a> </h4>
+<h4> <a href = "Convert.cpp.html">Convert.cpp </a> </h4>
+<h4> <a href = "Utilities.cpp.html">Utilities.cpp </a> </h4>
+<h4> <a href = "FileSystem.h.html">FileSystem.h </a> </h4>
+<h4> <a href = "Test2.cpp.html">Test2.cpp </a> </h4>
+<h4> <a href = "Test2.cpp.html">Test2.cpp </a> </h4>
+<h4> <a href = "CppProperties.cpp.html">CppProperties.cpp </a> </h4>
+<h4> <a href = "XmlElement.cpp.html">XmlElement.cpp </a> </h4>
+<h4> <a href = "Cpp11-BlockingQueue.cpp.html">Cpp11-BlockingQueue.cpp </a> </h4>
+<h4> <a href = "FileSystemTest.cpp.html">FileSystemTest.cpp </a> </h4>
+<h4> <a href = "GrammarHelpers.cpp.html">GrammarHelpers.cpp </a> </h4>
+<h4> <a href = "Utilities.h.html">Utilities.h </a> </h4>
+<PRE>
+
+/////////////////////////////////////////////////////////////////////////////
+// FileSystem.cpp - Support file and directory operations                  //
+// ver 2.6                                                                 //
+// ----------------------------------------------------------------------- //
+// copyright © Jim Fawcett, 2012                                           //
+// All rights granted provided that this notice is retained                //
+// ----------------------------------------------------------------------- //
+// Language:    Visual C++, Visual Studio 2010                             //
+// Platform:    Dell XPS 8300, Core i7, Windows 7 SP1                      //
+// Application: Summer Projects, 2012                                      //
+// Author:      Jim Fawcett, CST 4-187, Syracuse University                //
+//              (315) 443-3948, jfawcett@twcny.rr.com                      //
+/////////////////////////////////////////////////////////////////////////////
+
+#include &lt;iostream&gt;
+#include &lt;string&gt;
+#include &lt;sstream&gt;
+#include &lt;iomanip&gt;
+#include &lt;utility&gt;
+#include &lt;clocale&gt;
+#include &lt;locale&gt;
+#include "FileSystem.h"
+
+using namespace FileSystem;
+
+/////////////////////////////////////////////////////////
+// helper FileSystemSearch
+
+class FileSystemSearch
+{<button id ="10000"onclick="myFunction0();toggleText0(this.id);">-</button><div id="0">
+public:
+  FileSystemSearch();
+  ~FileSystemSearch();
+  std::string firstFile(const std::string& path=".", const std::string& pattern="*.*");
+  std::string nextFile();
+  std::string firstDirectory(const std::string& path=".", const std::string& pattern="*.*");
+  std::string nextDirectory();
+  void close();
+private:
+  HANDLE hFindFile;
+  WIN32_FIND_DATAA FindFileData;
+  WIN32_FIND_DATAA* pFindFileData;
+</div>}};
+
+FileSystemSearch::FileSystemSearch() : pFindFileData(&FindFileData) {}
+FileSystemSearch::~FileSystemSearch() { ::FindClose(hFindFile); }
+void FileSystemSearch::close() { ::FindClose(hFindFile); }
+
+//----&lt; block constructor taking array iterators &gt;-------------------------
+
+Block::Block(Byte* beg, Byte* end) : bytes_(beg, end) {}
+
+//----&lt; push back block byte &gt;---------------------------------------------
+
+void Block::push_back(Byte b)
+{<button id ="10001"onclick="myFunction1();toggleText1(this.id);">-</button><div id="1">
+  bytes_.push_back(b);
+</div>}}
+//----&lt; non-const indexer &gt;------------------------------------------------
+
+Byte& Block::operator[](size_t i)
+{<button id ="10002"onclick="myFunction2();toggleText2(this.id);">-</button><div id="2">
+  if(i&lt;0 || bytes_.size() &lt;= i)
+    throw std::runtime_error("index out of range in Block");
+  return bytes_[i];
+</div>}}
+//----&lt; const indexer &gt;----------------------------------------------------
+
+Byte Block::operator[](size_t i) const
+{<button id ="10003"onclick="myFunction3();toggleText3(this.id);">-</button><div id="3">
+  if(i&lt;0 || bytes_.size() &lt;= i)
+    throw std::runtime_error("index out of range in Block");
+  return bytes_[i];
+</div>}}
+//----&lt; equality comparison &gt;----------------------------------------------
+
+bool Block::operator==(const Block& block) const
+{<button id ="10004"onclick="myFunction4();toggleText4(this.id);">-</button><div id="4">
+  return bytes_ == block.bytes_;
+</div>}}
+//----&lt; inequality comparison &gt;--------------------------------------------
+
+bool Block::operator!=(const Block& block) const
+{<button id ="10005"onclick="myFunction5();toggleText5(this.id);">-</button><div id="5">
+  return bytes_ != block.bytes_;
+</div>}}
+//----&lt; return number of bytes in block &gt;----------------------------------
+
+size_t Block::size() const
+{<button id ="10006"onclick="myFunction6();toggleText6(this.id);">-</button><div id="6">
+  return bytes_.size();
+</div>}}
+
+//----&lt; File constructor opens file stream &gt;-------------------------------
+
+File::File(const std::string& filespec) 
+    : name_(filespec), pIStream(nullptr), pOStream(nullptr), dirn_(in), typ_(text), good_(true)
+{
+}
+//----&lt; File destructor closes file stream &gt;-------------------------------
+
+File::~File() 
+{ 
+  if(pIStream)
+  {
+    pIStream-&gt;close(); 
+    delete pIStream;
+    pIStream = nullptr;
+    good_ = false;
+  }
+  if(pOStream)
+  {
+    pOStream-&gt;close();
+    delete pOStream; 
+    pOStream = nullptr;
+    good_ = false;
+  }
+</div>}}
+//----&lt; open for reading or writing &gt;--------------------------------------
+
+bool File::open(direction dirn, type typ)
+{<button id ="10007"onclick="myFunction7();toggleText7(this.id);">-</button><div id="7">
+  dirn_ = dirn;
+  typ_ = typ;
+  good_ = true;
+  if(dirn == in)
+  {
+    pIStream = new std::ifstream;
+    if(typ == binary)
+      pIStream-&gt;open(name_.c_str(), std::ios::in | std::ios::binary);
+    else
+      pIStream-&gt;open(name_.c_str(), std::ios::in);
+    if (!(*pIStream).good())
+    {
+      good_ = false;
+      pIStream = nullptr;
+      //throw std::runtime_error("\n  open for input failed in File constructor");
+    }
+  }
+  else
+  {
+    pOStream = new std::ofstream;
+    if(typ == binary)
+      pOStream-&gt;open(name_.c_str(), std::ios::out | std::ios::binary);
+    else
+      pOStream-&gt;open(name_.c_str(), std::ios::out);
+    if (!(*pOStream).good())
+    {
+      good_ = false;
+      pOStream = nullptr;
+      //throw std::runtime_error("\n  open for output failed in File constructor");
+    }
+  }
+  return good_;
+</div>}}
+//----&lt; reads one line of a text file &gt;------------------------------------
+
+std::string File::getLine(bool keepNewLines)
+{<button id ="10008"onclick="myFunction8();toggleText8(this.id);">-</button><div id="8">
+  if(pIStream == nullptr || !pIStream-&gt;good())
+    throw std::runtime_error("input stream not open");
+  if(typ_ == binary)
+    throw std::runtime_error("getting text line from binary file");
+  if(dirn_ == out)
+    throw std::runtime_error("reading output file");
+
+  std::string store;
+  while (true)
+  {
+    char ch = pIStream-&gt;get();
+    if (!isGood())
+      return store;
+    if (ch == '\n')
+    {
+      if (keepNewLines)
+        store += ch;
+      return store;
+    }
+    store += ch;
+  }
+</div>}}
+//----&lt; read all lines of text file into one string &gt;----------------------
+
+std::string File::readAll(bool keepNewLines)
+{<button id ="10009"onclick="myFunction9();toggleText9(this.id);">-</button><div id="9">
+  std::string store;
+  while (true)
+  {
+    if (!isGood())
+      return store;
+    store += getLine(keepNewLines);
+    std::locale loc;
+    if (store.size() &gt; 0 && !std::isspace(store[store.size() - 1], loc))
+      store += ' ';
+  }
+  return store;
+</div>}}
+//----&lt; writes one line of a text to a file &gt;------------------------------
+
+void File::putLine(const std::string& s, bool wantReturn)
+{<button id ="10010"onclick="myFunction10();toggleText10(this.id);">-</button><div id="10">
+  if(pOStream == nullptr || !pOStream-&gt;good())
+    throw std::runtime_error("output stream not open");
+  if(typ_ == binary)
+    throw std::runtime_error("writing text line to binary file");
+  if(dirn_ == in)
+    throw std::runtime_error("writing input file");
+  for(size_t i=0; i&lt;s.size(); ++i)
+    pOStream-&gt;put(s[i]);
+  if(wantReturn)
+    pOStream-&gt;put('\n');
+  pOStream-&gt;flush();
+</div>}}
+//----&lt; reads a block of bytes from binary file &gt;--------------------------
+
+Block File::getBlock(size_t size)
+{<button id ="10011"onclick="myFunction11();toggleText11(this.id);">-</button><div id="11">
+  if(pIStream == nullptr || !pIStream-&gt;good())
+    throw std::runtime_error("input stream not open");
+  if(typ_ != binary)
+    throw std::runtime_error("reading binary from text file");
+  if(dirn_ == out)
+    throw std::runtime_error("reading output file");
+  Block blk;
+  if(pIStream)
+  {
+    for(size_t i=0; i&lt;size; ++i)
+    {
+      Byte b;
+      pIStream-&gt;get(b);
+      if(pIStream-&gt;good())
+        blk.push_back(b);
+      else
+        break;
+    }
+  }
+  return blk;
+</div>}}
+//----&lt; writes a block of bytes to binary file &gt;---------------------------
+
+void File::putBlock(const Block& blk)
+{<button id ="10012"onclick="myFunction12();toggleText12(this.id);">-</button><div id="12">
+  if(pOStream == nullptr || !pOStream-&gt;good())
+    throw std::runtime_error("output stream not open");
+  if(typ_ != binary)
+    throw std::runtime_error("writing binary to text file");
+  if(dirn_ == in)
+    throw std::runtime_error("writing input file");
+  if(!pOStream-&gt;good())
+    return;
+  for(size_t i=0; i&lt;blk.size(); ++i)
+  {
+    pOStream-&gt;put(blk[i]);
+  }
+</div>}}
+//----&lt; read buffer of bytes from binary file &gt;----------------------------
+
+size_t File::getBuffer(size_t bufLen, File::byte* buffer)
+{<button id ="10013"onclick="myFunction13();toggleText13(this.id);">-</button><div id="13">
+  if (pIStream == nullptr || !pIStream-&gt;good())
+    throw std::runtime_error("input stream not open");
+  if (typ_ != binary)
+    throw std::runtime_error("reading binary from text file");
+  if (dirn_ == out)
+    throw std::runtime_error("reading output file");
+  size_t count = 0;
+  while (pIStream-&gt;good())
+  {
+    buffer[count++] = pIStream-&gt;get();
+      if (count == bufLen)
+        break;
+  }
+  if (!pIStream-&gt;good())  // don't write EOF char
+    --count;
+  return count;
+</div>}}
+//----&lt; write buffer of bytes to binary file &gt;-------------------------------
+
+void File::putBuffer(size_t bufLen, File::byte* buffer)
+{<button id ="10014"onclick="myFunction14();toggleText14(this.id);">-</button><div id="14">
+  if (pOStream == nullptr || !pOStream-&gt;good())
+    throw std::runtime_error("output stream not open");
+  if (typ_ != binary)
+    throw std::runtime_error("writing binary to text file");
+  if (dirn_ == in)
+    throw std::runtime_error("writing input file");
+  if (!pOStream-&gt;good())
+    return;
+  size_t count = 0;
+  while(pOStream-&gt;good())
+  {
+    pOStream-&gt;put(buffer[count++]);
+    if (count == bufLen)
+      break;
+  }
+</div>}}
+//----&lt; tests for error free stream state &gt;--------------------------------
+
+bool File::isGood()
+{<button id ="10015"onclick="myFunction15();toggleText15(this.id);">-</button><div id="15">
+  if(!good_)
+    return false;
+  if(pIStream != nullptr)
+    return (good_ = pIStream-&gt;good());
+  if(pOStream != nullptr)
+    return (good_ = pOStream-&gt;good());
+  return (good_ = false);
+</div>}}
+//----&lt; flushes output stream to its file &gt;--------------------------------
+
+void File::flush()
+{<button id ="10016"onclick="myFunction16();toggleText16(this.id);">-</button><div id="16">
+  if(pOStream != nullptr && pOStream-&gt;good())
+    pOStream-&gt;flush();
+</div>}}
+//----&lt; clears error state enabling operations again &gt;---------------------
+
+void File::clear()
+{<button id ="10017"onclick="myFunction17();toggleText17(this.id);">-</button><div id="17">
+  if(pIStream != nullptr)
+    pIStream-&gt;clear();
+  if(pOStream != nullptr)
+    pOStream-&gt;clear();
+</div>}}
+//----&lt; close file handle &gt;------------------------------------------------
+
+void File::close()
+{<button id ="10018"onclick="myFunction18();toggleText18(this.id);">-</button><div id="18">
+  File::flush();
+  if (pIStream != nullptr)
+  {
+    pIStream-&gt;close();
+    pIStream = nullptr;
+    good_ = false;
+  }
+  if (pOStream)
+  {
+    pOStream-&gt;close();
+    pOStream = nullptr;
+    good_ = false;
+  }
+</div>}}
+//----&lt; file exists &gt;--------------------------------------------------
+
+bool File::exists(const std::string& file)
+{<button id ="10019"onclick="myFunction19();toggleText19(this.id);">-</button><div id="19">
+  return ::GetFileAttributesA(file.c_str()) != INVALID_FILE_ATTRIBUTES;
+</div>}}
+//----&lt; copy file &gt;----------------------------------------------------
+
+bool File::copy(const std::string& src, const std::string& dst, bool failIfExists)
+{<button id ="10020"onclick="myFunction20();toggleText20(this.id);">-</button><div id="20">
+  return ::CopyFileA(src.c_str(), dst.c_str(), failIfExists) != 0;
+</div>}}
+//----&lt; remove file &gt;--------------------------------------------------
+
+bool File::remove(const std::string& file)
+{<button id ="10021"onclick="myFunction21();toggleText21(this.id);">-</button><div id="21">
+  return ::DeleteFileA(file.c_str()) != 0;
+</div>}}
+//----&lt; constructor &gt;--------------------------------------------------
+
+FileInfo::FileInfo(const std::string& fileSpec)
+{<button id ="10022"onclick="myFunction22();toggleText22(this.id);">-</button><div id="22">
+  HANDLE hFile = ::FindFirstFileA(fileSpec.c_str(), &data);
+  if(hFile == INVALID_HANDLE_VALUE)
+    good_ = false;
+  else
+    good_ = true;
+</div>}}
+//----&lt; is passed filespec valid? &gt;------------------------------------
+
+bool FileInfo::good()
+{<button id ="10023"onclick="myFunction23();toggleText23(this.id);">-</button><div id="23">
+  return good_;
+</div>}}
+//----&lt; return file name &gt;---------------------------------------------
+
+std::string FileInfo::name() const
+{<button id ="10024"onclick="myFunction24();toggleText24(this.id);">-</button><div id="24">
+  return Path::getName(data.cFileName);
+</div>}}
+//----&lt; conversion helper &gt;--------------------------------------------
+
+std::string FileInfo::intToString(long i)
+{<button id ="10025"onclick="myFunction25();toggleText25(this.id);">-</button><div id="25">
+  std::ostringstream out;
+  out.fill('0');
+  out &lt;&lt; std::setw(2) &lt;&lt; i;
+  return out.str();
+</div>}}
+//----&lt; return file date &gt;---------------------------------------------
+
+std::string FileInfo::date(dateFormat df) const
+{<button id ="10026"onclick="myFunction26();toggleText26(this.id);">-</button><div id="26">
+  std::string dateStr, timeStr;
+  FILETIME ft;
+  SYSTEMTIME st;
+  ::FileTimeToLocalFileTime(&data.ftLastWriteTime, &ft);
+  ::FileTimeToSystemTime(&ft, &st);
+  dateStr = intToString(st.wMonth) + '/' + intToString(st.wDay) + '/' + intToString(st.wYear);
+  timeStr = intToString(st.wHour) + ':' + intToString(st.wMinute) + ':' + intToString(st.wSecond);
+  if(df == dateformat)
+    return dateStr;
+  if(df == timeformat)
+    return timeStr;
+  return dateStr + " " + timeStr;
+</div>}}
+//----&lt; return file size &gt;---------------------------------------------
+
+size_t FileInfo::size() const
+{<button id ="10027"onclick="myFunction27();toggleText27(this.id);">-</button><div id="27">
+  return (size_t)(data.nFileSizeLow + (data.nFileSizeHigh &lt;&lt; 8));
+</div>}}
+//----&lt; is type archive? &gt;---------------------------------------------
+
+bool FileInfo::isArchive() const
+{<button id ="10028"onclick="myFunction28();toggleText28(this.id);">-</button><div id="28">
+  return (data.dwFileAttributes & FILE_ATTRIBUTE_ARCHIVE) != 0;
+</div>}}
+//----&lt; is type compressed? &gt;------------------------------------------
+
+bool FileInfo::isCompressed() const
+{<button id ="10029"onclick="myFunction29();toggleText29(this.id);">-</button><div id="29">
+  return (data.dwFileAttributes & FILE_ATTRIBUTE_COMPRESSED) != 0;
+</div>}}
+//----&lt; is type directory? &gt;-------------------------------------------
+
+bool FileInfo::isDirectory() const
+{<button id ="10030"onclick="myFunction30();toggleText30(this.id);">-</button><div id="30">
+  return (data.dwFileAttributes & FILE_ATTRIBUTE_DIRECTORY) != 0;
+</div>}}
+//----&lt; is type encrypted? &gt;---------------------------------------------
+
+bool FileInfo::isEncrypted() const
+{<button id ="10031"onclick="myFunction31();toggleText31(this.id);">-</button><div id="31">
+  return (data.dwFileAttributes & FILE_ATTRIBUTE_ENCRYPTED) != 0;
+</div>}}
+//----&lt; is type hiddent? &gt;---------------------------------------------
+
+bool FileInfo::isHidden() const
+{<button id ="10032"onclick="myFunction32();toggleText32(this.id);">-</button><div id="32">
+  return (data.dwFileAttributes & FILE_ATTRIBUTE_HIDDEN) != 0;
+</div>}}
+//----&lt; is type normal? &gt;---------------------------------------------
+
+bool FileInfo::isNormal() const
+{<button id ="10033"onclick="myFunction33();toggleText33(this.id);">-</button><div id="33">
+  return (data.dwFileAttributes & FILE_ATTRIBUTE_NORMAL) != 0;
+</div>}}
+//----&lt; is type offline? &gt;---------------------------------------------
+
+bool FileInfo::isOffLine() const
+{<button id ="10034"onclick="myFunction34();toggleText34(this.id);">-</button><div id="34">
+  return (data.dwFileAttributes & FILE_ATTRIBUTE_OFFLINE) != 0;
+</div>}}
+//----&lt; is type readonly? &gt;--------------------------------------------
+
+bool FileInfo::isReadOnly() const
+{<button id ="10035"onclick="myFunction35();toggleText35(this.id);">-</button><div id="35">
+  return (data.dwFileAttributes & FILE_ATTRIBUTE_READONLY) != 0;
+</div>}}
+//----&lt; is type system? &gt;----------------------------------------------
+
+bool FileInfo::isSystem() const
+{<button id ="10036"onclick="myFunction36();toggleText36(this.id);">-</button><div id="36">
+  return (data.dwFileAttributes & FILE_ATTRIBUTE_SYSTEM  ) != 0;
+</div>}}
+//----&lt; is type temporary? &gt;-------------------------------------------
+
+bool FileInfo::isTemporary() const
+{<button id ="10037"onclick="myFunction37();toggleText37(this.id);">-</button><div id="37">
+  return (data.dwFileAttributes & FILE_ATTRIBUTE_TEMPORARY) != 0;
+</div>}}
+//----&lt; compare names alphabetically &gt;---------------------------------
+
+bool FileInfo::operator&lt;(const FileInfo& fi) const
+{<button id ="10038"onclick="myFunction38();toggleText38(this.id);">-</button><div id="38">
+  return strcmp(data.cFileName, fi.data.cFileName) == -1;
+</div>}}
+//----&lt; compare names alphabetically &gt;---------------------------------
+
+bool FileInfo::operator==(const FileInfo& fi) const
+{<button id ="10039"onclick="myFunction39();toggleText39(this.id);">-</button><div id="39">
+  return strcmp(data.cFileName, fi.data.cFileName) == 0;
+</div>}}
+//----&lt; compare names alphabetically &gt;---------------------------------
+
+bool FileInfo::operator&gt;(const FileInfo& fi) const
+{<button id ="10040"onclick="myFunction40();toggleText40(this.id);">-</button><div id="40">
+  return strcmp(data.cFileName, fi.data.cFileName) == 1;
+</div>}}
+//----&lt; compare file times &gt;-------------------------------------------
+
+bool FileInfo::earlier(const FileInfo& fi) const
+{<button id ="10041"onclick="myFunction41();toggleText41(this.id);">-</button><div id="41">
+  FILETIME ft1 = data.ftLastWriteTime;
+  FILETIME ft2 = fi.data.ftLastWriteTime;
+  return ::CompareFileTime(&ft1, &ft2) == -1;
+</div>}}
+//----&lt; compare file times &gt;-------------------------------------------
+
+bool FileInfo::later(const FileInfo& fi) const
+{<button id ="10042"onclick="myFunction42();toggleText42(this.id);">-</button><div id="42">
+  FILETIME ft1 = data.ftLastWriteTime;
+  FILETIME ft2 = fi.data.ftLastWriteTime;
+  return ::CompareFileTime(&ft1, &ft2) == 1;
+</div>}}
+//----&lt; smaller &gt;------------------------------------------------------
+
+bool FileInfo::smaller(const FileInfo &fi) const
+{<button id ="10043"onclick="myFunction43();toggleText43(this.id);">-</button><div id="43">
+  return size() &lt; fi.size();
+</div>}}
+//----&lt; larger &gt;-------------------------------------------------------
+
+bool FileInfo::larger(const FileInfo &fi) const
+{<button id ="10044"onclick="myFunction44();toggleText44(this.id);">-</button><div id="44">
+  return size() &gt; fi.size();
+</div>}}
+//----&lt; convert string to lower case chars &gt;---------------------------
+
+std::string Path::toLower(const std::string& src)
+{<button id ="10045"onclick="myFunction45();toggleText45(this.id);">-</button><div id="45">
+  std::string temp;
+  for(size_t i=0; i&lt;src.length(); ++i)
+    temp += tolower(src[i]);
+  return temp;
+</div>}}
+//----&lt; convert string to upper case chars &gt;---------------------------
+
+  
+std::string Path::toUpper(const std::string& src)
+{<button id ="10046"onclick="myFunction46();toggleText46(this.id);">-</button><div id="46">
+  std::string temp;
+  for(size_t i=0; i&lt;src.length(); ++i)
+    temp += toupper(src[i]);
+  return temp;
+</div>}}
+//----&lt; get path from fileSpec &gt;---------------------------------------
+
+std::string Path::getName(const std::string &fileSpec, bool withExt)
+{<button id ="10047"onclick="myFunction47();toggleText47(this.id);">-</button><div id="47">
+  size_t pos = fileSpec.find_last_of("/");
+  if(pos &gt;= fileSpec.length())
+  {
+    pos = fileSpec.find_last_of("\\");
+    if(pos &gt;= fileSpec.length())
+    {
+      // no path prepended
+      if(withExt)
+        return fileSpec;
+      else
+      {
+        // remove ext
+        size_t pos = fileSpec.find(".");
+        if(pos &gt; fileSpec.size())
+          return fileSpec;
+        return fileSpec.substr(0, pos-1);
+      }
+    }
+  }
+  if(withExt)
+    return fileSpec.substr(pos+1,fileSpec.length()-pos);
+  else
+  {
+    // remove ext
+    size_t pos2 = fileSpec.find(".", pos);
+    if(pos2 &gt; fileSpec.size())
+      // no ext
+      return fileSpec.substr(pos+1);
+    return fileSpec.substr(pos+1, pos2-pos-1);
+  }
+</div>}}
+//----&lt; get extension from fileSpec &gt;----------------------------------
+  
+std::string Path::getExt(const std::string& fileSpec)
+{<button id ="10048"onclick="myFunction48();toggleText48(this.id);">-</button><div id="48">
+  size_t pos1 = fileSpec.find_last_of('/');
+  size_t pos2 = fileSpec.find_last_of('\\');
+  size_t pos = fileSpec.find_last_of('.');
+  // handle ../ or ..\\ with no extension
+  if(pos1 &lt; fileSpec.length() || pos2 &lt; fileSpec.length())
+  {
+    if(pos &lt; min(pos1, pos2))
+      return std::string("");
+  }
+  // only . is extension delimiter
+  if(0 &lt;= pos && pos &lt; fileSpec.length())
+    return toLower(fileSpec.substr(pos+1,fileSpec.length()-pos));
+  return std::string("");
+</div>}}
+//----&lt; get path from fileSpec &gt;---------------------------------------
+
+std::string Path::getPath(const std::string &fileSpec)
+{<button id ="10049"onclick="myFunction49();toggleText49(this.id);">-</button><div id="49">
+  size_t pos = fileSpec.find_last_of("/");
+  if(pos &gt;= fileSpec.length())
+    pos = fileSpec.find_last_of("\\");
+  if(pos &gt;= fileSpec.length())
+    return ".";
+  if(fileSpec.find(".",pos+1))
+    return fileSpec.substr(0,pos+1);
+  return fileSpec;
+</div>}}
+//----&lt; get absoluth path from fileSpec &gt;------------------------------
+
+std::string Path::getFullFileSpec(const std::string &fileSpec)
+{<button id ="10050"onclick="myFunction50();toggleText50(this.id);">-</button><div id="50">
+  const size_t BufSize = 256;
+  char buffer[BufSize];
+  char filebuffer[BufSize];  // don't use but GetFullPathName will
+  char* name = filebuffer;
+  ::GetFullPathNameA(fileSpec.c_str(),BufSize, buffer, &name);
+  return std::string(buffer);
+</div>}}
+//----&lt; create file spec from path and name &gt;--------------------------
+
+std::string Path::fileSpec(const std::string &path, const std::string &name)
+{<button id ="10051"onclick="myFunction51();toggleText51(this.id);">-</button><div id="51">
+  std::string fs;
+  size_t len = path.size();
+  if(path[len-1] == '/' || path[len-1] == '\\')
+    fs = path + name;
+  else
+  {
+    if(path.find("/") &lt; path.size())
+      fs = path + "/" + name;
+    else if(path.find("\\") &lt; path.size())
+      fs = path + "\\" + name;
+    else
+      fs = path + "/" + name;
+  }
+  return fs;
+</div>}}
+//----&lt; return name of the current directory &gt;-----------------------------
+
+std::string Directory::getCurrentDirectory()
+{<button id ="10052"onclick="myFunction52();toggleText52(this.id);">-</button><div id="52">
+  char buffer[MAX_PATH];
+  ::GetCurrentDirectoryA(MAX_PATH,buffer);
+  return std::string(buffer);
+</div>}}
+//----&lt; change the current directory to path &gt;-----------------------------
+
+bool Directory::setCurrentDirectory(const std::string& path)
+{<button id ="10053"onclick="myFunction53();toggleText53(this.id);">-</button><div id="53">
+  return ::SetCurrentDirectoryA(path.c_str()) != 0;
+</div>}}
+//----&lt; get names of all the files matching pattern (path:name) &gt;----------
+
+std::vector&lt;std::string&gt; Directory::getFiles(const std::string& path, const std::string& pattern)
+{<button id ="10054"onclick="myFunction54();toggleText54(this.id);">-</button><div id="54">
+  std::vector&lt;std::string&gt; files;
+  FileSystemSearch fss;
+  std::string file = fss.firstFile(path, pattern);
+  if(file.size() == 0)
+    return files;
+  files.push_back(file);
+  while(true)
+  {
+    file = fss.nextFile();
+    if(file.size() == 0)
+      return files;
+    files.push_back(file);
+  }
+  return files;
+</div>}}
+//----&lt; get names of all directories matching pattern (path:name) &gt;--------
+
+std::vector&lt;std::string&gt; Directory::getDirectories(const std::string& path, const std::string& pattern)
+{<button id ="10055"onclick="myFunction55();toggleText55(this.id);">-</button><div id="55">
+  std::vector&lt;std::string&gt; dirs;
+  FileSystemSearch fss;
+  std::string dir = fss.firstDirectory(path, pattern);
+  if(dir.size() == 0)
+    return dirs;
+  dirs.push_back(dir);
+  while(true)
+  {
+    dir = fss.nextDirectory();
+    if(dir.size() == 0)
+      return dirs;
+    dirs.push_back(dir);
+  }
+  return dirs;
+</div>}}
+//----&lt; create directory &gt;-------------------------------------------------
+
+bool Directory::create(const std::string& path)
+{<button id ="10056"onclick="myFunction56();toggleText56(this.id);">-</button><div id="56">
+  return ::CreateDirectoryA(path.c_str(), NULL) == 0;
+</div>}}
+//----&lt; does directory exist? &gt;--------------------------------------------
+
+bool Directory::exists(const std::string& path)
+{<button id ="10057"onclick="myFunction57();toggleText57(this.id);">-</button><div id="57">
+  DWORD dwAttrib = GetFileAttributesA(path.c_str());
+
+  return (dwAttrib != INVALID_FILE_ATTRIBUTES && 
+         (dwAttrib & FILE_ATTRIBUTE_DIRECTORY));
+</div>}}
+//----&lt; remove directory &gt;-------------------------------------------------
+
+bool Directory::remove(const std::string& path)
+{<button id ="10058"onclick="myFunction58();toggleText58(this.id);">-</button><div id="58">
+  return ::RemoveDirectoryA(path.c_str()) == 0;
+</div>}}
+//----&lt; find first file &gt;--------------------------------------------------
+
+std::string FileSystemSearch::firstFile(const std::string& path, const std::string& pattern)
+{<button id ="10059"onclick="myFunction59();toggleText59(this.id);">-</button><div id="59">
+  hFindFile = ::FindFirstFileA(Path::fileSpec(path, pattern).c_str(), pFindFileData);
+  if(hFindFile != INVALID_HANDLE_VALUE)
+  {
+    if(!(pFindFileData-&gt;dwFileAttributes & FILE_ATTRIBUTE_DIRECTORY))
+      return pFindFileData-&gt;cFileName;
+    else
+      while(::FindNextFileA(hFindFile, pFindFileData))
+        if(!(pFindFileData-&gt;dwFileAttributes & FILE_ATTRIBUTE_DIRECTORY))
+          return pFindFileData-&gt;cFileName;
+  }
+  return "";
+</div>}}
+//----&lt; find next file &gt;---------------------------------------------------
+
+std::string FileSystemSearch::nextFile()
+{<button id ="10060"onclick="myFunction60();toggleText60(this.id);">-</button><div id="60">
+  while(::FindNextFileA(hFindFile, pFindFileData))
+    if(!(pFindFileData-&gt;dwFileAttributes & FILE_ATTRIBUTE_DIRECTORY))
+      return pFindFileData-&gt;cFileName;
+  return "";
+</div>}}
+//----&lt; find first file &gt;--------------------------------------------------
+
+std::string FileSystemSearch::firstDirectory(const std::string& path, const std::string& pattern)
+{<button id ="10061"onclick="myFunction61();toggleText61(this.id);">-</button><div id="61">
+  hFindFile = ::FindFirstFileA(Path::fileSpec(path, pattern).c_str(), pFindFileData);
+  if(hFindFile != INVALID_HANDLE_VALUE)
+  {
+    if(pFindFileData-&gt;dwFileAttributes & FILE_ATTRIBUTE_DIRECTORY)
+      return pFindFileData-&gt;cFileName;
+    else
+      while(::FindNextFileA(hFindFile, pFindFileData))
+        if(pFindFileData-&gt;dwFileAttributes & FILE_ATTRIBUTE_DIRECTORY)
+          return pFindFileData-&gt;cFileName;
+  }
+  return "";
+</div>}}
+//----&lt; find next file &gt;---------------------------------------------------
+
+std::string FileSystemSearch::nextDirectory()
+{<button id ="10062"onclick="myFunction62();toggleText62(this.id);">-</button><div id="62">
+  while(::FindNextFileA(hFindFile, pFindFileData))
+    if(pFindFileData-&gt;dwFileAttributes & FILE_ATTRIBUTE_DIRECTORY)
+      return pFindFileData-&gt;cFileName;
+  return "";
+</div>}}
+//----&lt; test stub &gt;--------------------------------------------------------
+
+#ifdef TEST_FILESYSTEM
+
+void title(const std::string& title, char ch='=')
+{<button id ="10063"onclick="myFunction63();toggleText63(this.id);">-</button><div id="63">
+  std::cout &lt;&lt; "\n  " &lt;&lt; title;
+  std::cout &lt;&lt; "\n " &lt;&lt; std::string(title.size()+2, ch);
+</div>}}
+int main(int argc, char* argv[])
+{<button id ="10064"onclick="myFunction64();toggleText64(this.id);">-</button><div id="64">
+  title("Demonstrate Path Class");
+
+  std::string fs = Path::fileSpec(".","temp.txt");
+  std::cout &lt;&lt; "\n  Path::fileSpec(\".\",\"temp.txt\") = " &lt;&lt; fs;
+
+  std::string path = Path::getPath(fs);
+  std::cout &lt;&lt; "\n  Path::getPath(\"" + fs + "\") = " &lt;&lt; path;
+  
+  std::string ffs = Path::getFullFileSpec(fs);
+  std::cout &lt;&lt; "\n  Path::getFullFileSpec(\"" + fs + "\") = " &lt;&lt; ffs;
+  
+  std::string name = Path::getName(fs);
+  std::cout &lt;&lt; "\n  Path::getName(\"" + fs + "\") = " &lt;&lt; name;
+
+  std::string ext = Path::getExt(fs);
+  std::cout &lt;&lt; "\n  Path::getExt(\"" + fs + "\") = " &lt;&lt; ext;
+
+  std::string upper = Path::toUpper("temp.txt");
+  std::cout &lt;&lt; "\n  Path::toUpper(\"temp.txt\") = " &lt;&lt; upper;
+
+  std::string lower = Path::toLower("Temp.Txt");
+  std::cout &lt;&lt; "\n  Path::toLower(\"Temp.Txt\") = " &lt;&lt; lower;
+  std::cout &lt;&lt; std::endl;
+  /*
+  title("Demonstrate FileSystemSearch class");
+
+  const size_t PathSetSize = 2;
+  std::string home = ::getenv("HOMEDRIVE");
+  std::string pathSet[] = { home+"\\\\", "." };
+  FileSystemSearch fss;
+  for(size_t i = 0; i&lt;PathSetSize; ++i)
+  {
+    std::cout &lt;&lt; "\n  searching for files on \"" &lt;&lt; pathSet[i] &lt;&lt; "\"";
+    std::cout &lt;&lt; "\n " &lt;&lt; std::string(27 + pathSet[i].size(), '-');
+    std::string searchPath = pathSet[i];
+    std::string fileName = fss.firstFile(searchPath);
+    if(fileName.size() &gt; 0)
+      std::cout &lt;&lt; "\n  " &lt;&lt; fileName;
+    else
+      std::cout &lt;&lt; "\n  no files match search";
+    while(true) {
+      fileName = fss.nextFile();
+      if(fileName.size() &gt; 0)
+        std::cout &lt;&lt; "\n  " &lt;&lt; fileName;
+      else
+        break;
+    }
+    std::cout &lt;&lt; std::endl;
+
+    std::cout &lt;&lt; "\n  searching for directories on \"" &lt;&lt; pathSet[i] &lt;&lt; "\"";
+    std::cout &lt;&lt; "\n " &lt;&lt; std::string(33 + pathSet[i].size(), '-');
+    std::string dirName = fss.firstDirectory(searchPath);
+    if(dirName.size() &gt; 0)
+      std::cout &lt;&lt; "\n  " &lt;&lt; dirName;
+    else
+      std::cout &lt;&lt; "\n  no directories match search";
+    while(true)
+    {
+      dirName = fss.nextDirectory();
+      if(dirName.size() &gt; 0)
+        std::cout &lt;&lt; "\n  " &lt;&lt; dirName;
+      else
+        break;
+    }
+    std::cout &lt;&lt; std::endl;
+  }
+  */
+  title("Demonstrate Directory class");
+
+  // Display contents of current directory
+
+  std::cout &lt;&lt; "\n  current directory is:\n    " &lt;&lt; Directory::getCurrentDirectory();
+  std::cout &lt;&lt; "\n  It contains files:";
+  std::vector&lt;std::string&gt; currfiles = Directory::getFiles();
+  ///////////////////////////////////////////////////////
+  // This works too
+  // std::vector&lt;std::string&gt; currfiles = d.getFiles();  
+  for(size_t i=0; i&lt;currfiles.size(); ++i)
+    std::cout &lt;&lt; "\n    " &lt;&lt; currfiles[i].c_str();
+  std::cout &lt;&lt; "\n  and contains directories:";
+  std::vector&lt;std::string&gt; currdirs = Directory::getDirectories();
+  for(size_t i=0; i&lt;currdirs.size(); ++i)
+    std::cout &lt;&lt; "\n    " &lt;&lt; currdirs[i].c_str();
+  std::cout &lt;&lt; "\n";
+
+  // Display contents of non-current directory
+
+  std::cout &lt;&lt; "\n  .txt files residing in C:/temp are:";
+  currfiles = Directory::getFiles("c:/temp/", "*.txt");
+
+  // if we want fully qualified file names, we have to
+  // set the current directory to the path on which the files
+  // reside, if it isn't already so set
+
+  std::string currDir = Directory::getCurrentDirectory();
+  Directory::setCurrentDirectory("c:/temp/");
+  for(size_t i=0; i&lt;currfiles.size(); ++i)
+    std::cout &lt;&lt; "\n    " &lt;&lt; Path::getFullFileSpec(currfiles[i]).c_str();
+  Directory::setCurrentDirectory(currDir);
+
+  // we have to restore the current directory so the
+  // remaining tests work
+
+  // it's probably easier just to use Path::fileSpec(path, filename)
+  // like this:
+
+  for (size_t i = 0; i&lt;currfiles.size(); ++i)
+    std::cout &lt;&lt; "\n    " &lt;&lt; Path::fileSpec("c:\\temp\\", currfiles[i]).c_str();
+
+  std::cout &lt;&lt; "\n";
+  std::cout &lt;&lt; "\n  directories residing in C:/temp are:";
+  currdirs = Directory::getDirectories("c:/temp/");
+  for(size_t i=0; i&lt;currdirs.size(); ++i)
+    std::cout &lt;&lt; "\n    " &lt;&lt; currdirs[i].c_str();
+  std::cout &lt;&lt; "\n";
+
+  // Create directory
+
+  title("Demonstrate FileInfo Class Operations", '=');
+  std::cout &lt;&lt; "\n";
+
+  Directory::setCurrentDirectory(".");
+  std::cout &lt;&lt; "\n  current path is \"" &lt;&lt; Directory::getCurrentDirectory();
+  
+  std::string fn1;
+  if(argc &gt; 1)
+    fn1 = argv[1];
+  else
+    fn1 = "c:\\temp\\test.txt";
+  FileInfo fi(fn1);
+
+  if(fi.good())
+  {
+    std::cout &lt;&lt; "\n  name: " &lt;&lt; "\t" &lt;&lt; fi.name();
+    std::cout &lt;&lt; "\n  date: " &lt;&lt; "\t" &lt;&lt; fi.date();
+    std::cout &lt;&lt; "\n  date: " &lt;&lt; "\t" &lt;&lt; fi.date(FileInfo::dateformat);
+    std::cout &lt;&lt; "\n  date: " &lt;&lt; "\t" &lt;&lt; fi.date(FileInfo::timeformat);
+    std::cout &lt;&lt; "\n  size: " &lt;&lt; "\t" &lt;&lt; fi.size() &lt;&lt; " bytes";
+    if(fi.isArchive())
+      std::cout &lt;&lt; "\n  is archive";
+    else
+      std::cout &lt;&lt; "\n  is not archive";
+    if(fi.isCompressed())
+      std::cout &lt;&lt; "\n  is compressed";
+    else
+      std::cout &lt;&lt; "\n  is not compressed";
+    if(fi.isDirectory())
+      std::cout &lt;&lt; "\n  is directory";
+    else
+      std::cout &lt;&lt; "\n  is not directory";
+    if(fi.isEncrypted())
+      std::cout &lt;&lt; "\n  is encrypted";
+    else
+      std::cout &lt;&lt; "\n  is not encrypted";
+    if(fi.isHidden())
+      std::cout &lt;&lt; "\n  is hidden";
+    else
+      std::cout &lt;&lt; "\n  is not hidden";
+    if(fi.isNormal())
+      std::cout &lt;&lt; "\n  is normal";
+    else
+      std::cout &lt;&lt; "\n  is not normal";
+    if(fi.isOffLine())
+      std::cout &lt;&lt; "\n  is offline";
+    else
+      std::cout &lt;&lt; "\n  is not offline";
+    if(fi.isReadOnly())
+      std::cout &lt;&lt; "\n  is readonly";
+    else
+      std::cout &lt;&lt; "\n  is not readonly";
+    if(fi.isSystem())
+      std::cout &lt;&lt; "\n  is system";
+    else
+      std::cout &lt;&lt; "\n  is not system";
+    if(fi.isTemporary())
+      std::cout &lt;&lt; "\n  is temporary";
+    else
+      std::cout &lt;&lt; "\n  is not temporary";
+  }
+  else
+    std::cout &lt;&lt; "\n  filename " &lt;&lt; fn1 &lt;&lt; " is not valid in this context\n";
+
+  std::string fn2;
+  if(argc &gt; 2)
+  {
+    fn1 = argv[1];
+    fn2 = argv[2];
+  }
+  else
+  {
+    fn1 = "FileSystem.h";
+    fn2 = "FileSystem.cpp";
+  }
+  FileInfo fi1(fn1);
+  FileInfo fi2(fn2);
+  if(fi1.good() && fi2.good())
+  {
+    if(fi1 == fi1)
+      std::cout &lt;&lt; "\n  " &lt;&lt; fi1.name() &lt;&lt; " == " &lt;&lt; fi1.name();
+    else
+      std::cout &lt;&lt; "\n  " &lt;&lt; fi1.name() &lt;&lt; " != " &lt;&lt; fi1.name();
+    if(fi1 &lt; fi1)
+      std::cout &lt;&lt; "\n  " &lt;&lt; fi1.name() &lt;&lt; " &lt; " &lt;&lt; fi1.name();
+    else
+      std::cout &lt;&lt; "\n  " &lt;&lt; fi1.name() &lt;&lt; " &gt;= " &lt;&lt; fi1.name();
+    if(fi1 == fi2)
+      std::cout &lt;&lt; "\n  " &lt;&lt; fi1.name() &lt;&lt; " == " &lt;&lt; fi2.name();
+    else
+      std::cout &lt;&lt; "\n  " &lt;&lt; fi1.name() &lt;&lt; " != " &lt;&lt; fi2.name();
+    if(fi1 &lt; fi2)
+      std::cout &lt;&lt; "\n  " &lt;&lt; fi1.name() &lt;&lt; " &lt; " &lt;&lt; fi2.name();
+    else
+      std::cout &lt;&lt; "\n  " &lt;&lt; fi1.name() &lt;&lt; " &gt;= " &lt;&lt; fi2.name();
+    if(fi1.smaller(fi2))
+      std::cout &lt;&lt; "\n  " &lt;&lt; fi1.name() &lt;&lt; " is smaller than " &lt;&lt; fi2.name();
+    else
+      std::cout &lt;&lt; "\n  " &lt;&lt; fi1.name() &lt;&lt; " is not smaller than " &lt;&lt; fi2.name();
+    if(fi1.earlier(fi2))
+      std::cout &lt;&lt; "\n  " &lt;&lt; fi1.name() &lt;&lt; " is earlier than " &lt;&lt; fi2.name();
+    else
+      std::cout &lt;&lt; "\n  " &lt;&lt; fi1.name() &lt;&lt; " is not earlier than " &lt;&lt; fi2.name();
+    std::cout &lt;&lt; std::endl;
+  }
+  else
+    std::cout &lt;&lt; "\n  files " &lt;&lt; fn1 &lt;&lt; " and " &lt;&lt; fn2 &lt;&lt; " are not valid in this context\n";
+
+  title("Demonstrate File class operations", '=');
+  std::cout &lt;&lt; "\n";
+
+  // copy binary file from one directory to another
+
+  File me("../debug/filesystemdemo.exe");
+  me.open(File::in, File::binary);
+  std::cout &lt;&lt; "\n  copying " &lt;&lt; me.name().c_str() &lt;&lt; " to c:/temp";
+  if(!me.isGood())
+  {
+    std::cout &lt;&lt; "\n  can't open executable\n";
+    std::cout &lt;&lt; "\n  looking for:\n  ";
+    std::cout &lt;&lt; Path::getFullFileSpec(me.name()) &lt;&lt; "\n";
+  }
+  else
+  {
+    File you("c:/temp/fileSystemdemo.exe");
+    you.open(File::out, File::binary);
+    if(you.isGood())
+    {
+      while(me.isGood())
+      {
+        static size_t count = 0;
+        Block b = me.getBlock(1024);
+        you.putBlock(b);
+        if (++count &lt; 10)
+        {
+          std::cout &lt;&lt; "\n    reading block of " &lt;&lt; b.size() &lt;&lt; " bytes";
+          std::cout &lt;&lt; "\n    writing block of " &lt;&lt; b.size() &lt;&lt; " bytes";
+        }
+        if (b.size() &lt; 1024)
+        {
+          std::cout &lt;&lt; "\n\n    omitted " &lt;&lt; count-10 &lt;&lt; " blocks from display\n\n";
+          std::cout &lt;&lt; "\n    reading block of " &lt;&lt; b.size() &lt;&lt; " bytes";
+          std::cout &lt;&lt; "\n    writing block of " &lt;&lt; b.size() &lt;&lt; " bytes";
+        }
+      }
+      std::cout &lt;&lt; "\n";
+    }
+  }
+
+  // save some filespecs of text files in a vector for File demonstrations
+
+  std::vector&lt;std::string&gt; files;
+  if(argc == 1)
+  {
+    std::cout &lt;&lt; "\n\n  Enter, on the command line, an additional filename to process.\n";
+  }
+
+  for(int i=1; i&lt;argc; ++i)
+  {
+    files.push_back(argv[i]);
+  }
+  files.push_back("FileSystem.cpp");                     // file not on current path
+  files.push_back("../FileSystemDemo/FileSystem.cpp");   // file from project directory
+  files.push_back("../FileSystemTest.txt");              // file in solution directory
+  files.push_back("foobar");                             // doesn't exist
+
+  // open each file and display a few lines of text
+
+  for(size_t i=0; i&lt;files.size(); ++i)
+  {
+    File file(files[i]);
+    file.open(File::in);
+    if(!file.isGood())
+    {
+      std::cout &lt;&lt; "\n  Can't open file " &lt;&lt; file.name();
+      std::cout &lt;&lt; "\n  Here's what the program can't find:\n  " &lt;&lt; Path::getFullFileSpec(file.name()); 
+      continue;
+    }
+    std::string temp = std::string("Processing file ") + files[i];
+    title(temp, '-');
+    for(int j=0; j&lt;10; ++j)
+    {
+      if(!file.isGood())
+        break;
+      std::cout &lt;&lt; "\n  -- " &lt;&lt; file.getLine().c_str();
+    }
+    std::cout &lt;&lt; "\n";
+  }
+  std::cout &lt;&lt; "\n";
+
+  // read all lines of text file into string
+
+  title("testing File::readAll()", '-');
+  std::cout &lt;&lt; "\n";
+  File testAll("../FileSystemTest.txt");
+  testAll.open(File::in);
+  if (testAll.isGood())
+  {
+    std::string all = testAll.readAll();
+    std::cout &lt;&lt; all &lt;&lt; "\n";
+  }
+  testAll.close();
+
+  title("testing File::readAll(true)", '-');
+  std::cout &lt;&lt; "\n";
+  File testAllTrue("../FileSystemTest.txt");
+  testAllTrue.open(File::in);
+  if (testAllTrue.isGood())
+  {
+    std::string all = testAllTrue.readAll(true);
+    std::cout &lt;&lt; all &lt;&lt; "\n";
+  }
+  testAllTrue.close();
+
+  // test reading non-text files
+
+  title("test reading non-text files", '-');
+  std::cout &lt;&lt; "\n";
+  std::string testPath = "./debug";  // run from project directory (what Visual Studio does)
+  if (!Directory::exists(testPath))
+    testPath = ".";                  // run from solution debug directory
+  std::vector&lt;std::string&gt; testFiles = Directory::getFiles(testPath);
+  for (auto file : testFiles)
+  {
+    try
+    {
+      std::string ext = Path::getExt(file);
+      if (ext == "exe" || ext == "dll" || file == "run.dat")
+      {
+        /* reading binary file works, but generates a lot of garbage */
+        /* I use run.dat to capture this output so including will make output confusing */
+
+        std::cout &lt;&lt; "  skipping binary file " &lt;&lt; file &lt;&lt; "\n";
+        continue;
+      }
+      File test(file);
+      test.open(File::in);  // open as text file
+      std::cout &lt;&lt; "\n  processing \"" &lt;&lt; file &lt;&lt; "\"\n";
+      if (test.isGood())
+      {
+        std::string text = test.readAll(true);
+        std::cout &lt;&lt; text &lt;&lt; "\n";
+      }
+      else
+      {
+        std::cout &lt;&lt; "\n  open failed\n";
+      }
+    }
+    catch (std::exception& ex)
+    {
+      std::cout &lt;&lt; "\n  Exception: " &lt;&lt; ex.what() &lt;&lt; "\n";
+    }
+  }
+
+  // read text file and write to another text file
+
+  title("writing to c:/temp/test.txt", '-');
+  File in("../FileSystemDemo/FileSystem.h");
+  in.open(File::in, File::text);
+  File out("c:/temp/test.txt");
+  out.open(File::out, File::text);
+  while(in.isGood())
+  {
+    std::string temp = in.getLine();
+    //std::cout &lt;&lt; "\n  " &lt;&lt; temp.c_str();
+    out.putLine(temp);
+    out.putLine("\n");
+  }
+  std::cout &lt;&lt; "\n  check c:/temp/test.txt to validate";
+  std::cout &lt;&lt; "\n\n";
+
+  // read and write buffers
+
+  title("reading and writing buffers");
+  std::cout &lt;&lt; "\n  " &lt;&lt; FileSystem::Directory::getCurrentDirectory();
+  std::string fileIn = "TestFileSystem/UnitTest.h";
+  std::string fileOut = "TestFileSystem/CopyOfUnitTest.h";
+  File bufferIn(fileIn);
+  bufferIn.open(File::in, File::binary);
+  if (!bufferIn.isGood())
+  {
+    std::cout &lt;&lt; "\n  could not open \"" &lt;&lt; fileIn &lt;&lt; "\" for reading";
+      return 1;
+  }
+  else
+  {
+    std::cout &lt;&lt; "\n  opening: \"" &lt;&lt; fileIn &lt;&lt; "\" for reading";
+  }
+  File bufferOut(fileOut);
+  bufferOut.open(File::out, File::binary);
+  if (!bufferOut.isGood())
+  {
+    std::cout &lt;&lt; "\n  could not open \"" &lt;&lt; fileOut &lt;&lt; "\" for writing\n\n";
+      return 1;
+  }
+  else
+  {
+    std::cout &lt;&lt; "\n  opening: \"" &lt;&lt; fileOut &lt;&lt; "\" for writing";
+  }
+  std::cout &lt;&lt; "\n";
+  const size_t bufLen = 124;
+  File::byte buffer[bufLen];
+  while (true)
+  {
+    size_t resultSize = bufferIn.getBuffer(bufLen, buffer);
+    //std::cout &lt;&lt; "\n  reading buffer of size " &lt;&lt; resultSize &lt;&lt; " bytes";
+    std::string temp1(buffer, resultSize);
+    std::cout &lt;&lt; temp1;
+    //std::cout &lt;&lt; "\n  writing buffer of size " &lt;&lt; resultSize &lt;&lt; "bytes";
+    bufferOut.putBuffer(resultSize, buffer);
+    if (resultSize &lt; bufLen || !bufferIn.isGood() || !bufferOut.isGood())
+    {
+      bufferIn.close();
+      bufferOut.close();
+      break;
+    }
+  }
+  std::cout &lt;&lt; "\n\n";
+</div>}}
+#endif</PRE> </body> </html>

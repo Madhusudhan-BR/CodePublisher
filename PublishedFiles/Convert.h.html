@@ -1,0 +1,82 @@
+<!----------------------------------------------------------------------------../PublishedFiles/Convert.h.html - output HTML file for Project #3 Published 5 April 2017 Madhusudhan.B.R, CSE687 - Object Oriented Design, Spring 2017-----------------------------------------------------------------------------> <html> <head>
+ 
+    <link rel="stylesheet" type = "text/css"  href="stylesheet.css"/>  
+ <script type="text/javascript" src="script.js"></script></head> <body> <h4>Convert.h<br> Dependent files : 
+<h4> <a href = "Convert.h.html">Convert.h </a> </h4>
+<h4> <a href = "Test1.cpp.html">Test1.cpp </a> </h4>
+<h4> <a href = "Test1.cpp.html">Test1.cpp </a> </h4>
+<PRE>
+
+#pragma once
+/////////////////////////////////////////////////////////////////////
+// Convert.h - Demonstrate Template Syntax                         //
+//                                                                 //
+// Jim Fawcett, CSE687 - Object Oriented Design, Spring 2017       //
+/////////////////////////////////////////////////////////////////////
+/*
+ * - Template classes use one or more unspecified types, defined by
+ *   arguments in the template declaration: template&lt;typename T, ...&gt;.
+ *
+ * - Because the arguments are not specified, the C++ compiler cannot
+ *   generate object code until it sees an application instantiate
+ *   the template type(s).
+ *
+ * - The consequence of this is that all template definitions must be
+ *   placed in a header file, to be included by the application.
+ *
+ * - Unlike C# and Java, template syntax checking happens when the
+ *   application is compiled.  
+ *
+ * - That means that a template class can use any methods for the 
+ *   unspecified type and will successfully compile.  If the type does
+ *   not have a method used by the template code, a compile time error
+ *   occurs when the application is compiled.
+ */
+#include &lt;sstream&gt;
+#include &lt;string&gt;
+
+/////////////////////////////////////////////////////////////////////
+// Convert&lt;T&gt; class
+// - (de)serializes objects of type T (from)to strings
+// - generates a type identifier using Run-Time Type Identification
+//
+template&lt;typename T&gt;
+class Convert
+{<button id ="10000"onclick="myFunction0();toggleText0(this.id);">-</button><div id="0">
+public:
+  virtual ~Convert&lt;T&gt;() {}
+  static std::string toString(const T& t);
+  static T fromString(const std::string& str);
+  static std::string id(const T& t);
+</div>}};
+/*----&lt; serialize t to a std::string &gt;-----------------------------*/
+/*
+ * Assumes that T defines an insertion operator.
+ */
+template&lt;typename T&gt;
+std::string Convert&lt;T&gt;::toString(const T& t)
+{<button id ="10001"onclick="myFunction1();toggleText1(this.id);">-</button><div id="1">
+  std::ostringstream out;
+  out &lt;&lt; *const_cast&lt;T*&gt;(&t);  
+  return out.str();
+</div>}}
+/*----&lt; create an instance of T from a std::string &gt;---------------*/
+/*
+ * Assumes that T defines an extraction operator.
+ * To succeed str must be created from Convert&lt;T&gt;::toString(const T& t). 
+ */
+template&lt;typename T&gt;
+T Convert&lt;T&gt;::fromString(const std::string& str)
+{<button id ="10002"onclick="myFunction2();toggleText2(this.id);">-</button><div id="2">
+  std::istringstream in(str);
+  T value;
+  in &gt;&gt; value;    // istringstream extraction provides the conversion
+  return value;
+</div>}}
+/*----&lt; create an id string from an instance of T using RTTI &gt;----*/
+
+template&lt;typename T&gt;
+std::string Convert&lt;T&gt;::id(const T& t)
+{<button id ="10003"onclick="myFunction3();toggleText3(this.id);">-</button><div id="3">
+  return typeid(t).name();
+</div>}}</PRE> </body> </html>

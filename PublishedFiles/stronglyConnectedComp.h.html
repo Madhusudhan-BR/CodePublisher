@@ -1,0 +1,171 @@
+<!----------------------------------------------------------------------------../PublishedFiles/stronglyConnectedComp.h.html - output HTML file for Project #3 Published 5 April 2017 Madhusudhan.B.R, CSE687 - Object Oriented Design, Spring 2017-----------------------------------------------------------------------------> <html> <head>
+ 
+    <link rel="stylesheet" type = "text/css"  href="stylesheet.css"/>  
+ <script type="text/javascript" src="script.js"></script></head> <body> <h4>stronglyConnectedComp.h<br> Dependent files : 
+<h4> <a href = "stronglyConnectedComp.h.html">stronglyConnectedComp.h </a> </h4>
+<h4> <a href = "NoSqlDb.h.html">NoSqlDb.h </a> </h4>
+<h4> <a href = "Convert.cpp.html">Convert.cpp </a> </h4>
+<h4> <a href = "Utilities.cpp.html">Utilities.cpp </a> </h4>
+<h4> <a href = "Display.h.html">Display.h </a> </h4>
+<PRE>
+
+#pragma once
+/////////////////////////////////////////////////////////////////////
+// stronglyConnectedComp - This header file is used to detect      //
+// ver 1                    connected components                   //
+//-----------------------------------------------------------------//
+// Madhusudhan B R SUID-914198627                                  //
+// All rights granted provided this copyright notice is retained   //
+//-----------------------------------------------------------------//
+// Language:    C++, Visual Studio 2015                            //
+// Platform:    Mac 15inch   , Windows 10                          //
+// Application: Project #2, CSE687 - Object Oriented Design, S2017 //
+// Author:      Madhusudhan.B.R, Syracuse University.		       //
+//									                               //
+/////////////////////////////////////////////////////////////////////
+/*
+* Package Operations:
+* -------------------
+* This package contains a graph class tht is and functions used to detect scc
+*
+*
+* - manual information
+* - maintenance information
+*
+*
+*
+*
+* Required Files:
+* ---------------
+* display.h
+*
+* Maintenance History:
+*---------------------
+* ver 1.0 : 03-10-2017
+*
+*
+*
+*
+*
+*
+*
+*
+* - first release
+*/
+// A C++ package to find strongly connected components in a given
+// directed graph using Tarjan's algorithm (single DFS)
+#include&lt;iostream&gt;
+#include &lt;list&gt;
+#include &lt;stack&gt;
+#include &lt;vector&gt;
+#include &lt;map&gt;
+#include &lt;unordered_map&gt;
+#include &lt;algorithm&gt;
+#include "../FileMgr/FileMgr.h"
+#include "../FileSystem/FileSystem.h"
+#include "../NoSqlDb/NoSqlDb.h"
+#include "../Display/Display.h"
+#define NIL -1
+using namespace std;
+
+// A class that represents an directed graph
+class Graph
+{<button id ="10000"onclick="myFunction0();toggleText0(this.id);">-</button><div id="0">
+	int V;    // No. of vertices
+	list&lt;int&gt; *adj;    // A dynamic array of adjacency lists
+
+	NoSQLDB::NoSqlDb&lt;std::string&gt; strongCompDb;
+			   // A Recursive DFS based function used by SCC()
+	void SCCUtil(int u, int disc[], int low[],
+		stack&lt;int&gt; *st, bool stackMember[], std::unordered_map&lt;int, std::string&gt; mapFilesFromInt);
+public:
+	Graph(int V);   
+	void addEdge(int v, int w);   
+	NoSQLDB::NoSqlDb&lt;std::string&gt; SCC(std::unordered_map&lt;int,std::string&gt; mapFilesFromInt);    
+</div>}};
+// Constructor
+Graph::Graph(int V)
+{<button id ="10001"onclick="myFunction1();toggleText1(this.id);">-</button><div id="1">
+	this-&gt;V = V;
+	adj = new list&lt;int&gt;[V];
+</div>}}
+// function to add an edge to graph
+void Graph::addEdge(int v, int w)
+{<button id ="10002"onclick="myFunction2();toggleText2(this.id);">-</button><div id="2">
+	adj[v].push_back(w);
+</div>}}
+
+// A recursive function that finds and prints strongly connected
+// components using DFS traversal
+
+void Graph::SCCUtil(int u, int disc[], int low[], stack&lt;int&gt; *st,
+	bool stackMember[], std::unordered_map&lt;int, std::string&gt; mapFilesFromInt)
+{<button id ="10003"onclick="myFunction3();toggleText3(this.id);">-</button><div id="3">
+	static int time = 0;
+	disc[u] = low[u] = ++time;
+	st-&gt;push(u);
+	stackMember[u] = true;
+
+	list&lt;int&gt;::iterator i;
+	for (i = adj[u].begin(); i != adj[u].end(); ++i)
+	{
+		int v = *i;  
+		if (disc[v] == -1)
+		{
+			SCCUtil(v, disc, low, st, stackMember, mapFilesFromInt);
+			low[u] = min(low[u], low[v]);
+		}
+
+		else if (stackMember[v] == true)
+			low[u] = min(low[u], disc[v]);
+	}
+
+	int w = 0;  
+	if (low[u] == disc[u])
+	{	
+		std::vector&lt;string&gt;		outVect;
+		while (st-&gt;top() != u)
+		{	
+			
+			w = (int)st-&gt;top();
+			outVect.push_back(mapFilesFromInt[w]);
+			displaySCC(mapFilesFromInt[w]);
+			stackMember[w] = false;
+			st-&gt;pop();
+		}
+		NoSQLDB::Element&lt;std::string&gt; ele;
+		
+		w = (int)st-&gt;top();
+		outVect.push_back(mapFilesFromInt[w]);
+		//cout &lt;&lt; mapFilesFromInt[w] &lt;&lt; "\n";
+		cout &lt;&lt;"\n"&lt;&lt;std::endl;
+		displaySCC(mapFilesFromInt[w]);
+		ele.children = outVect;
+		strongCompDb.saveRecord(mapFilesFromInt[u], ele);
+		stackMember[w] = false;
+		st-&gt;pop();
+		
+	}
+</div>}}
+
+// The function to do DFS traversal. It uses SCCUtil()
+NoSQLDB::NoSqlDb&lt;std::string&gt; Graph::SCC(std::unordered_map&lt;int, std::string&gt; mapFilesFromInt)
+{<button id ="10004"onclick="myFunction4();toggleText4(this.id);">-</button><div id="4">
+	int *disc = new int[V];
+	int *low = new int[V];
+	bool *stackMember = new bool[V];
+	stack&lt;int&gt; *st = new stack&lt;int&gt;();
+
+	for (int i = 0; i &lt; V; i++)
+	{
+		disc[i] = NIL;
+		low[i] = NIL;
+		stackMember[i] = false;
+	}
+
+	for (int i = 0; i &lt; V; i++)
+		if (disc[i] == NIL)
+			SCCUtil(i, disc, low, st, stackMember, mapFilesFromInt);
+	
+	return strongCompDb;
+}</PRE> </body> </html>

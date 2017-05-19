@@ -1,0 +1,895 @@
+<!----------------------------------------------------------------------------../PublishedFiles/Window.cpp.html - output HTML file for Project #3 Published 5 April 2017 Madhusudhan.B.R, CSE687 - Object Oriented Design, Spring 2017-----------------------------------------------------------------------------> <html> <head>
+ 
+    <link rel="stylesheet" type = "text/css"  href="stylesheet.css"/>  
+ <script type="text/javascript" src="script.js"></script></head> <body> <h4>Window.cpp<br> Dependent files : 
+<h4> <a href = "Window.h.html">Window.h </a> </h4>
+<h4> <a href = "Window.cpp.html">Window.cpp </a> </h4>
+<h4> <a href = "Convert.cpp.html">Convert.cpp </a> </h4>
+<h4> <a href = "Utilities.cpp.html">Utilities.cpp </a> </h4>
+<h4> <a href = "FileSystem.h.html">FileSystem.h </a> </h4>
+<h4> <a href = "Convert.h.html">Convert.h </a> </h4>
+<h4> <a href = "Utilities.h.html">Utilities.h </a> </h4>
+<h4> <a href = "Utilities.h.html">Utilities.h </a> </h4>
+<PRE>
+
+/////////////////////////////////////////////////////////////////////
+// Window.cpp - C++\CLI implementation of WPF Application          //
+//            - Runs Code Static Analysis                          //
+// ver 3.2                                                         //
+//-----------------------------------------------------------------//
+// Jim Fawcett (c) copyright 2016                                  //
+// All rights granted provided this copyright notice is retained   //
+//-----------------------------------------------------------------//
+// Language:    C++, Visual Studio 2015                            //
+// Platform:    Dell XPS 8900, Windows 10                          //
+// Application: Code Analyzer for SMA and OOD, S2016               //
+// Author:      Jim Fawcett, Syracuse University, CST 4-187        //
+//              jfawcett@twcny.rr.com                              //
+/////////////////////////////////////////////////////////////////////
+/*
+*  This note is here to show how to convert between console and window app.
+*  ------------------------------------------------------------------------
+*  To run as a Console Application - this is what you need for this project:
+*  - Set Project Properties &gt; Linker &gt; System &gt; Subsytem to Console
+*  - Uncomment int main(...) at bottom
+*  - Comment out int _stdcall WinMain() at bottom
+*  To run as a Windows Application - not very useful for this project:
+*  - Set Project Properties &gt; Linker &gt; System &gt; Subsystem to Windows
+*  - Comment out int main(...) at bottom
+*  - Uncomment int _stdcall WinMain() at bottom
+*/
+#include "Window.h"
+#include &lt;string&gt;
+
+using namespace CppCliWindows;
+using namespace System::Windows;
+using namespace System::Windows::Data;
+using namespace System::Globalization;
+using namespace System::IO;
+using namespace System::Reflection;
+using namespace System::Diagnostics;
+
+WPFCppCliDemo::WPFCppCliDemo()
+{<button id ="10000"onclick="myFunction0();toggleText0(this.id);">-</button><div id="0">
+  // set event handlers
+
+  this-&gt;Loaded += 
+    gcnew System::Windows::RoutedEventHandler(this, &WPFCppCliDemo::OnLoaded);
+  this-&gt;Closing += 
+    gcnew CancelEventHandler(this, &WPFCppCliDemo::Unloading);
+
+  hExecutionTab-&gt;GotFocus += gcnew RoutedEventHandler(this, &CppCliWindows::WPFCppCliDemo::executionTabSelected);
+  hSetupTab-&gt;GotFocus += gcnew RoutedEventHandler(this, &CppCliWindows::WPFCppCliDemo::setupTabSelected);
+  hProcModeTab-&gt;GotFocus += gcnew RoutedEventHandler(this, &CppCliWindows::WPFCppCliDemo::procModeTabSelected);
+
+  hExecuteViewStartButton_-&gt;Click += gcnew RoutedEventHandler(this, &WPFCppCliDemo::execute);
+  hExecuteViewBrowseButton_-&gt;Click += gcnew RoutedEventHandler(this, &WPFCppCliDemo::browseForFolder);
+  hSetupBrowseButton_-&gt;Click += gcnew RoutedEventHandler(this, &WPFCppCliDemo::browseForFolderEx);
+  hSetupExecuteButton_-&gt;Click += gcnew RoutedEventHandler(this, &WPFCppCliDemo::execute);
+  hExecuteViewTextBox_-&gt;LostFocus += gcnew RoutedEventHandler(this, &WPFCppCliDemo::OnExecuteViewTextChanged);
+  hSetupViewTextBox_-&gt;LostFocus += gcnew RoutedEventHandler(this, &WPFCppCliDemo::OnSetupViewTextChanged);
+
+  // set Window properties
+
+  this-&gt;Title = "VisualCodeAnalyzer - Static Code Analysis";
+  this-&gt;Width = 450;
+  this-&gt;MinWidth = 450;
+  this-&gt;Height = 320;
+  this-&gt;MinHeight = 320;
+  this-&gt;Name = "MainWindow";
+
+  getUserSettings();
+
+  // attach dock panel to Window
+
+  this-&gt;Content = hDockPanel;
+  hDockPanel-&gt;Children-&gt;Add(hStatusBar);
+  hDockPanel-&gt;SetDock(hStatusBar, Dock::Bottom);
+  hDockPanel-&gt;Children-&gt;Add(hGrid);
+
+  // setup Window controls and views
+
+  setUpTabControl();
+  setUpStatusBar();
+  createExecutionView();
+  createSetupView();
+  createDisplayModeView();
+
+  hStatus-&gt;Text = "Browse to find analysis path or enter in textbox";
+</div>}}
+
+WPFCppCliDemo::~WPFCppCliDemo()
+{<button id ="10001"onclick="myFunction1();toggleText1(this.id);">-</button><div id="1">
+  
+</div>}}
+//----&lt; local helper function for getting user settings &gt;------------
+
+bool stringToBool(String^ value)
+{<button id ="10002"onclick="myFunction2();toggleText2(this.id);">-</button><div id="2">
+  if (value == "true")
+    return true;
+  return false;
+</div>}}
+//----&lt; retrieve user settings from last execution &gt;-----------------
+/*
+*  Look for user settings file in directory where GUI was started.
+*/
+void WPFCppCliDemo::getUserSettings()
+{<button id ="10003"onclick="myFunction3();toggleText3(this.id);">-</button><div id="3">
+  String^ settingsPath = Path::GetFullPath(Assembly::GetExecutingAssembly()-&gt;Location);
+  settingsPath = Path::GetDirectoryName(settingsPath);
+  if (!System::IO::Directory::Exists(settingsPath))
+  {
+    throw gcnew Exception("invalid settings path");
+  }
+  settingsPath += "\\UserSettings.txt";
+
+  try
+  {
+    System::IO::StreamReader^ sr = gcnew System::IO::StreamReader(settingsPath);
+    
+    userSettings_.path = sr-&gt;ReadLine();
+    userSettings_.h = stringToBool(sr-&gt;ReadLine());
+    userSettings_.cpp = stringToBool(sr-&gt;ReadLine());
+    userSettings_.cs = stringToBool(sr-&gt;ReadLine());
+    userSettings_.upatt = stringToBool(sr-&gt;ReadLine());
+
+    String^ commaSeperatedList = sr-&gt;ReadLine();
+    array&lt;String^&gt;^ patts = commaSeperatedList-&gt;Split(',');
+    for (int i = 0; i &lt; patts-&gt;Length; ++i)
+      hUPattList_-&gt;Items-&gt;Add(patts[i]);
+
+    userSettings_.cl = stringToBool(sr-&gt;ReadLine());
+
+    userSettings_.metrics = stringToBool(sr-&gt;ReadLine());
+    userSettings_.ast = stringToBool(sr-&gt;ReadLine());
+    userSettings_.slocs = stringToBool(sr-&gt;ReadLine());
+    userSettings_.rslt = stringToBool(sr-&gt;ReadLine());
+    userSettings_.demo = stringToBool(sr-&gt;ReadLine());
+    userSettings_.dbug = stringToBool(sr-&gt;ReadLine());
+    userSettings_.logfile = stringToBool(sr-&gt;ReadLine());
+    
+    sr-&gt;Close();
+  }
+  catch (Exception^ /*e*/)
+  {
+    // use default values
+    userSettings_.path = Environment::CurrentDirectory;
+    userSettings_.h = true;
+    userSettings_.cpp = true;
+    userSettings_.cs = false;
+    userSettings_.upatt = false;
+    userSettings_.upattStrs = "";
+    userSettings_.cl = false;
+    userSettings_.metrics = true;
+    userSettings_.ast = false;
+    userSettings_.slocs = false;
+    userSettings_.rslt = true;
+    userSettings_.demo = false;
+    userSettings_.dbug = false;
+    userSettings_.logfile = true;
+  }
+  hExecuteViewTextBox_-&gt;Text = path_ = userSettings_.path;
+  hSetupViewTextBox_-&gt;Text = path_;
+</div>}}
+//----&lt; helper function for saving user settings &gt;-------------------
+
+String^ boolToString(bool pred)
+{<button id ="10004"onclick="myFunction4();toggleText4(this.id);">-</button><div id="4">
+  if (pred)
+    return "true";
+  return "false";
+</div>}}
+//----&lt; persist user settings to file &gt;------------------------------
+/*
+*  Look for user settings file in directory where GUI was started.
+*/
+void WPFCppCliDemo::saveUserSettings()
+{<button id ="10005"onclick="myFunction5();toggleText5(this.id);">-</button><div id="5">
+  String^ settingsPath = Path::GetFullPath(Assembly::GetExecutingAssembly()-&gt;Location);
+  settingsPath = Path::GetDirectoryName(settingsPath);
+  if (!System::IO::Directory::Exists(settingsPath))
+  {
+    throw gcnew Exception("invalid settings path path");
+  }
+  settingsPath += "\\UserSettings.txt";
+
+  try
+  {
+    System::IO::StreamWriter^ sr = gcnew System::IO::StreamWriter(settingsPath);
+
+    sr-&gt;WriteLine(path_);
+    sr-&gt;WriteLine(boolToString((bool)hHdrs_-&gt;IsChecked));
+    sr-&gt;WriteLine(boolToString((bool)hImpls_-&gt;IsChecked));
+    sr-&gt;WriteLine(boolToString((bool)hCSharp_-&gt;IsChecked));
+    sr-&gt;WriteLine(boolToString((bool)hUPatt_-&gt;IsChecked));
+
+    String^ commaSeparatedList;
+    size_t count = hUPattList_-&gt;Items-&gt;Count;
+    for (size_t i = 0; i &lt; count - 1; ++i)
+      commaSeparatedList += hUPattList_-&gt;Items[i] + ",";
+    commaSeparatedList += hUPattList_-&gt;Items[count - 1];
+    sr-&gt;WriteLine(commaSeparatedList);
+
+    sr-&gt;WriteLine(boolToString((bool)hClear_-&gt;IsChecked));
+    sr-&gt;WriteLine(boolToString((bool)hMetrics_-&gt;IsChecked));
+    sr-&gt;WriteLine(boolToString((bool)hAST_-&gt;IsChecked));
+    sr-&gt;WriteLine(boolToString((bool)hSlocs_-&gt;IsChecked));
+    sr-&gt;WriteLine(boolToString((bool)hRsltMode_-&gt;IsChecked));
+    sr-&gt;WriteLine(boolToString((bool)hDemoMode_-&gt;IsChecked));
+    sr-&gt;WriteLine(boolToString((bool)hDbugMode_-&gt;IsChecked));
+    sr-&gt;WriteLine(boolToString((bool)hLogFileMode_-&gt;IsChecked));
+
+    sr-&gt;Close();
+  }
+  catch (Exception^ e)
+  {
+    Console::Write("\n\n{0}\n", e-&gt;Message);
+  }
+</div>}}
+//----&lt; envent handlers for selecting Tabs &gt;-------------------------
+
+void WPFCppCliDemo::setupTabSelected(Object^ sender, RoutedEventArgs^ args)
+{<button id ="10006"onclick="myFunction6();toggleText6(this.id);">-</button><div id="6">
+  this-&gt;Width = 600;
+  this-&gt;Height = 500;
+  hStatus-&gt;Text = "Use pattern settings and browse for path, or browse for files.";
+</div>}}
+
+void WPFCppCliDemo::executionTabSelected(Object^ sender, RoutedEventArgs^ args)
+{<button id ="10007"onclick="myFunction7();toggleText7(this.id);">-</button><div id="7">
+  this-&gt;Width = 400;
+  this-&gt;Height = 320;
+  hStatus-&gt;Text = "Browse to find analysis path or enter in textbox, then start";
+</div>}}
+
+void WPFCppCliDemo::procModeTabSelected(Object^ sender, RoutedEventArgs^ args)
+{<button id ="10008"onclick="myFunction8();toggleText8(this.id);">-</button><div id="8">
+  this-&gt;Width = 400;
+  this-&gt;Height = 320;
+  hStatus-&gt;Text = "Typically set Results Mode and LogFile Mode - use either Results or Demo or Debug";
+</div>}}
+//----&lt; setup status bar controls &gt;----------------------------------
+
+void WPFCppCliDemo::setUpStatusBar()
+{<button id ="10009"onclick="myFunction9();toggleText9(this.id);">-</button><div id="9">
+  hStatusBar-&gt;Items-&gt;Add(hStatusBarItem);
+  //hStatus-&gt;FontWeight = FontWeights::Bold;
+  hStatusBarItem-&gt;Content = hStatus;
+  hStatusBar-&gt;Padding = Thickness(10, 2, 10, 2);
+</div>}}
+//----&lt; setup application tab views &gt;--------------------------------
+
+void WPFCppCliDemo::setUpTabControl()
+{<button id ="10010"onclick="myFunction10();toggleText10(this.id);">-</button><div id="10">
+  hGrid-&gt;Children-&gt;Add(hTabControl);
+  hExecutionTab-&gt;Header = "Execution";
+  hSetupTab-&gt;Header = "Applic Setup";
+  hProcModeTab-&gt;Header = "Display Mode";
+  hTabControl-&gt;Items-&gt;Add(hExecutionTab);
+  hTabControl-&gt;Items-&gt;Add(hSetupTab);
+  hTabControl-&gt;Items-&gt;Add(hProcModeTab);
+</div>}}
+//----&lt; set properties of Execution View TextBox &gt;-------------------
+/*
+*  Sets TextBox properties and adds to Execution view
+*/
+void WPFCppCliDemo::setTextBlockProperties()
+{<button id ="10011"onclick="myFunction11();toggleText11(this.id);">-</button><div id="11">
+  RowDefinition^ hRow1Def = gcnew RowDefinition();
+  hRow1Def-&gt;Height = GridLength(50);
+  hExecutionGrid-&gt;RowDefinitions-&gt;Add(hRow1Def);
+  hExecutionGrid-&gt;Margin = Thickness(40);
+  Border^ hBorder1 = gcnew Border();
+  hBorder1-&gt;BorderThickness = Thickness(1);
+  hBorder1-&gt;BorderBrush = Brushes::Black;
+  hBorder1-&gt;Height = 25;
+  hBorder1-&gt;Child = hExecuteViewTextBox_;
+  hExecuteViewTextBox_-&gt;Padding = Thickness(2);
+  hExecuteViewTextBox_-&gt;Text = "";
+  hExecuteViewTextBox_-&gt;FontFamily = gcnew Windows::Media::FontFamily("Tahoma");
+  hExecuteViewTextBox_-&gt;FontWeight = FontWeights::Normal;
+  hExecuteViewTextBox_-&gt;FontSize = 14;
+  hExecutionGrid-&gt;SetRow(hBorder1, 0);
+  hExecutionGrid-&gt;Children-&gt;Add(hBorder1);
+</div>}}
+//----&lt; set properties of Execution View Buttons &gt;-------------------
+/*
+*  Sets Buttons properties and adds them to Execution view
+*/
+void WPFCppCliDemo::setButtonsProperties()
+{<button id ="10012"onclick="myFunction12();toggleText12(this.id);">-</button><div id="12">
+  RowDefinition^ hRow2Def = gcnew RowDefinition();
+  hRow2Def-&gt;Height = GridLength(75);
+  hExecutionGrid-&gt;RowDefinitions-&gt;Add(hRow2Def);
+  hExecuteViewBrowseButton_-&gt;Content = "Browse";
+  hExecuteViewBrowseButton_-&gt;Width = 90;
+  hExecuteViewBrowseButton_-&gt;Height = 20;
+  hExecuteViewStartButton_-&gt;Content = "Start Analysis";
+  hExecuteViewStartButton_-&gt;Width = 90;
+  hExecuteViewStartButton_-&gt;Height = 20;
+  hExecuteViewStartButton_-&gt;IsEnabled = true;
+  hStackPanel1-&gt;Children-&gt;Add(hExecuteViewBrowseButton_);
+  Label^ hHorizontalSpacer = gcnew Label();
+  hHorizontalSpacer-&gt;Width = 40;
+  hStackPanel1-&gt;Children-&gt;Add(hHorizontalSpacer);
+  hStackPanel1-&gt;Children-&gt;Add(hExecuteViewStartButton_);
+  hStackPanel1-&gt;Orientation = Orientation::Horizontal;
+  hStackPanel1-&gt;HorizontalAlignment = System::Windows::HorizontalAlignment::Center;
+  hExecutionGrid-&gt;SetRow(hStackPanel1, 1);
+  hExecutionGrid-&gt;Children-&gt;Add(hStackPanel1);
+</div>}}
+//----&lt; assemble Execution view &gt;------------------------------------
+
+void WPFCppCliDemo::createExecutionView()
+{<button id ="10013"onclick="myFunction13();toggleText13(this.id);">-</button><div id="13">
+  Border^ hExecutionBorder = gcnew Border();
+  hExecutionBorder-&gt;BorderThickness = Thickness(1);
+  hExecutionBorder-&gt;Margin = Thickness(15);
+  hExecutionBorder-&gt;BorderBrush = Brushes::LightGray;
+  hExecutionBorder-&gt;Child = hExecutionGrid;
+  hExecutionTab-&gt;Content = hExecutionBorder;
+
+  setTextBlockProperties();
+  setButtonsProperties();
+</div>}}
+//----&lt; helper class for binding ListBox in SetupView &gt;--------------
+
+ref class HeightConverter : IValueConverter
+{<button id ="10014"onclick="myFunction14();toggleText14(this.id);">-</button><div id="14">
+public:
+  virtual Object^ Convert(Object^ value, Type^ typeTarget, Object^ param, CultureInfo^ culture)
+  {<button id ="10015"onclick="myFunction15();toggleText15(this.id);">-</button><div id="15">
+    return (Object^)((Double)value - 420);
+  </div>}}
+  virtual Object^ ConvertBack(Object^ value, Type^ typeTarget, Object^ param, CultureInfo^ culture)
+  {<button id ="10016"onclick="myFunction16();toggleText16(this.id);">-</button><div id="16">
+    return (Object^)((Double)value + 420);
+  </div>}}
+</div>}};
+//----&lt; setup grid for Setup View &gt;----------------------------------
+
+void WPFCppCliDemo::setUpGrid()
+{<button id ="10017"onclick="myFunction17();toggleText17(this.id);">-</button><div id="17">
+  hSetupGrid-&gt;Margin = Thickness(10);
+  hSetupTab-&gt;Content = hSetupGrid;
+
+  ColumnDefinition^ hCol1Def = gcnew ColumnDefinition();
+  hCol1Def-&gt;Name = "ColumnLeft";
+  hSetupGrid-&gt;ColumnDefinitions-&gt;Add(hCol1Def);
+  ColumnDefinition^ hCol2Def = gcnew ColumnDefinition();
+  hCol2Def-&gt;Name = "Column2";
+  hCol2Def-&gt;Width = GridLength(250, GridUnitType::Pixel);
+  hSetupGrid-&gt;ColumnDefinitions-&gt;Add(hCol2Def);
+</div>}}
+//----&lt; setup file list binding of height to window height &gt;---------
+
+void WPFCppCliDemo::setUpBinding()
+{<button id ="10018"onclick="myFunction18();toggleText18(this.id);">-</button><div id="18">
+  // bind ListBox height to Window height minus offset
+  // defined by HeightConverter
+
+  Binding^ bnd = gcnew Binding("Value");
+  bnd-&gt;Source = this;
+  bnd-&gt;Converter = gcnew HeightConverter();
+  bnd-&gt;Path = gcnew PropertyPath(hUPattList_-&gt;ActualHeightProperty);
+  bnd-&gt;Mode = BindingMode::OneWay;
+  bnd-&gt;UpdateSourceTrigger = UpdateSourceTrigger::PropertyChanged;
+  BindingOperations::SetBinding(hUPattList_, ListBox::HeightProperty, bnd);
+</div>}}
+//----&lt; initialize setup view buttons &gt;------------------------------
+
+void WPFCppCliDemo::setUpSearchButtons()
+{<button id ="10019"onclick="myFunction19();toggleText19(this.id);">-</button><div id="19">
+  hSetupBrowseButton_-&gt;Content = "Browse";
+  hSetupBrowseButton_-&gt;Height = 20;
+  hSetupBrowseButton_-&gt;Width = 90;
+
+  hSetupExecuteButton_-&gt;Content = "Start Analysis";
+  hSetupExecuteButton_-&gt;Height = 20;
+  hSetupExecuteButton_-&gt;Width = 90;
+
+  Label^ hHorizSpacer3 = gcnew Label();
+  hHorizSpacer3-&gt;Width = 16;
+
+  Label^ hHorizSpacer4 = gcnew Label();
+  hHorizSpacer3-&gt;Width = 16;
+
+  hButtonsDocker_-&gt;SetValue(DockPanel::HorizontalAlignmentProperty, System::Windows::HorizontalAlignment::Left);
+  hButtonsDocker_-&gt;Children-&gt;Add(hHorizSpacer3);
+  hButtonsDocker_-&gt;Children-&gt;Add(hSetupBrowseButton_);
+  hButtonsDocker_-&gt;Children-&gt;Add(hHorizSpacer4);
+  hButtonsDocker_-&gt;Children-&gt;Add(hSetupExecuteButton_);
+</div>}}
+//----&lt; setup file list &gt;--------------------------------------------
+
+void WPFCppCliDemo::setupFileList()
+{<button id ="10020"onclick="myFunction20();toggleText20(this.id);">-</button><div id="20">
+  hUPatt_-&gt;IsChecked = userSettings_.upatt;
+  hUPatt_-&gt;SetValue(DockPanel::HorizontalAlignmentProperty, System::Windows::HorizontalAlignment::Left);
+  hUPattDock_-&gt;Children-&gt;Add(hUPatt_);
+  hUPattList_-&gt;Height = 70;
+  hUPattDock_-&gt;Children-&gt;Add(hUPattList_);
+
+  hClearLabel_-&gt;Content = "clear file list on browse";
+  hClear_-&gt;IsChecked = userSettings_.cl;
+  hClearStack_ = gcnew StackPanel();
+  hClearStack_-&gt;Orientation = Orientation::Horizontal;
+  hClearStack_-&gt;Children-&gt;Add(hClear_);
+  hClearStack_-&gt;Children-&gt;Add(hClearLabel_);
+</div>}}
+//----&lt; setup path Grid panel &gt;--------------------------------------
+
+void WPFCppCliDemo::setUpPathPanel()
+{<button id ="10021"onclick="myFunction21();toggleText21(this.id);">-</button><div id="21">
+  hPathLabel_-&gt;Content = "analysis path";
+  hSetupViewTextBox_-&gt;Padding = Thickness(2);
+  hSetupViewTextBox_-&gt;FontFamily = gcnew Windows::Media::FontFamily("Tahoma");
+  hSetupViewTextBox_-&gt;FontWeight = FontWeights::Normal;
+  hSetupViewTextBox_-&gt;FontSize = 14;
+  hPathPanel_-&gt;Children-&gt;Add(hSetupViewTextBox_);
+</div>}}
+//----&lt; setup file selection for search panel &gt;----------------------
+
+void WPFCppCliDemo::setupFileSearch()
+{<button id ="10022"onclick="myFunction22();toggleText22(this.id);">-</button><div id="22">
+  setupFileList();
+  setUpSearchButtons();
+  setUpPathPanel();
+
+  Label^ hVerticalSpacer1 = gcnew Label();
+  hVerticalSpacer1-&gt;Content = "";
+  hVerticalSpacer1-&gt;Height = 10;
+
+  Label^ hVerticalSpacer2 = gcnew Label();
+  hVerticalSpacer2-&gt;Height = 10;
+
+  Label^ hVerticalSpacer3 = gcnew Label();
+  hVerticalSpacer3-&gt;Height = 10;
+
+  StackPanel^ hStackPanelLeft = gcnew StackPanel();
+  hStackPanelLeft-&gt;Children-&gt;Add(hPattLabel_);
+  hStackPanelLeft-&gt;Children-&gt;Add(hHdrsStack_);
+  hStackPanelLeft-&gt;Children-&gt;Add(hImplsStack_);
+  hStackPanelLeft-&gt;Children-&gt;Add(hCSharpStack_);
+  hStackPanelLeft-&gt;Children-&gt;Add(hUPattDock_);
+  hStackPanelLeft-&gt;Children-&gt;Add(hVerticalSpacer1);
+  hStackPanelLeft-&gt;Children-&gt;Add(hClearStack_);
+  hStackPanelLeft-&gt;Children-&gt;Add(hVerticalSpacer2);
+  hStackPanelLeft-&gt;Children-&gt;Add(hButtonsDocker_);
+  hStackPanelLeft-&gt;Children-&gt;Add(hVerticalSpacer3);
+  hStackPanelLeft-&gt;Children-&gt;Add(hPathLabel_);
+  hStackPanelLeft-&gt;Children-&gt;Add(hPathPanel_);
+  hStackPanelLeft-&gt;Orientation = Orientation::Vertical;
+  hStackPanelLeft-&gt;Margin = Thickness(10);
+  hStackPanelLeft-&gt;Name = "StackPanelLeft";
+
+  Border^ hBorderLeft = gcnew Border();
+  hBorderLeft-&gt;Child = hStackPanelLeft;
+  hBorderLeft-&gt;BorderBrush = Brushes::LightGray;
+  hBorderLeft-&gt;BorderThickness = Thickness(1);
+  hBorderLeft-&gt;MinWidth = 200;
+  hBorderLeft-&gt;Margin = Thickness(5);
+
+  hSetupGrid-&gt;SetColumn(hBorderLeft, 0);
+  hSetupGrid-&gt;Children-&gt;Add(hBorderLeft);
+
+  setUpBinding();
+</div>}}
+//----&lt; setup patterns stacks &gt;--------------------------------------
+
+void WPFCppCliDemo::setUpPatternsStacks()
+{<button id ="10023"onclick="myFunction23();toggleText23(this.id);">-</button><div id="23">
+  hPattLabel_-&gt;Content = "Search Parameters";
+  hPattLabel_-&gt;FontSize = 16;
+  hPattLabel_-&gt;Margin = Thickness(10);
+
+  hHdrsLabel_-&gt;Content = "*.h";
+  hHdrs_-&gt;IsChecked = userSettings_.h;
+  hHdrsStack_-&gt;Orientation = Orientation::Horizontal;
+  hHdrsStack_-&gt;Children-&gt;Add(hHdrs_);
+  hHdrsStack_-&gt;Children-&gt;Add(hHdrsLabel_);
+
+  hImplsLabel_-&gt;Content = "*.cpp";
+  hImpls_-&gt;IsChecked = userSettings_.cpp;
+  hImplsStack_-&gt;Orientation = Orientation::Horizontal;
+  hImplsStack_-&gt;Children-&gt;Add(hImpls_);
+  hImplsStack_-&gt;Children-&gt;Add(hImplsLabel_);
+
+  hCSharpLabel_-&gt;Content = "*.cs";
+  hCSharp_-&gt;IsChecked = userSettings_.cs;
+  hCSharpStack_-&gt;Orientation = Orientation::Horizontal;
+  hCSharpStack_-&gt;Children-&gt;Add(hCSharp_);
+  hCSharpStack_-&gt;Children-&gt;Add(hCSharpLabel_);
+</div>}}
+//----&lt; setup search panel for Setup View &gt;--------------------------
+
+void WPFCppCliDemo::setUpSearchPanel()
+{<button id ="10024"onclick="myFunction24();toggleText24(this.id);">-</button><div id="24">
+  setUpPatternsStacks();
+  setupFileSearch();
+</div>}}
+//----&lt; setup Detailed Displays Panel for Setup View &gt;---------------
+
+void WPFCppCliDemo::setUpDisplaysPanel()
+{<button id ="10025"onclick="myFunction25();toggleText25(this.id);">-</button><div id="25">
+  Label^ hDisplaysLabel = gcnew Label();
+  hDisplaysLabel-&gt;Content = "Detailed Displays";
+  hDisplaysLabel-&gt;FontSize = 16;
+  hDisplaysLabel-&gt;Margin = Thickness(10);
+
+  hMetricsLabel_-&gt;Content = "Metrics display";
+  hMetrics_-&gt;IsChecked = userSettings_.metrics;
+  StackPanel^ hMetricsStack = gcnew StackPanel();
+  hMetricsStack-&gt;Orientation = Orientation::Horizontal;
+  hMetricsStack-&gt;Children-&gt;Add(hMetrics_);
+  hMetricsStack-&gt;Children-&gt;Add(hMetricsLabel_);
+
+  hASTLabel_-&gt;Content = "AST display";
+  hAST_-&gt;IsChecked = userSettings_.ast;
+  StackPanel^ hASTStack = gcnew StackPanel();
+  hASTStack-&gt;Orientation = Orientation::Horizontal;
+  hASTStack-&gt;Children-&gt;Add(hAST_);
+  hASTStack-&gt;Children-&gt;Add(hASTLabel_);
+
+  hSlocsLabel_-&gt;Content = "Slocs display";
+  hSlocs_-&gt;IsChecked = userSettings_.slocs;
+  StackPanel^ hSlocsStack = gcnew StackPanel();
+  hSlocsStack-&gt;Orientation = Orientation::Horizontal;
+  hSlocsStack-&gt;Children-&gt;Add(hSlocs_);
+  hSlocsStack-&gt;Children-&gt;Add(hSlocsLabel_);
+
+  Label^ hDisplaysCommentLabel = gcnew Label();
+  hDisplaysCommentLabel-&gt;Content = "Metric Summary always shown";
+  hDisplaysCommentLabel-&gt;Margin = Thickness(5);
+  hDisplaysCommentLabel-&gt;HorizontalAlignment = System::Windows::HorizontalAlignment::Left;
+
+  StackPanel^ hStackPanelRight = gcnew StackPanel();
+  hStackPanelRight-&gt;Children-&gt;Add(hDisplaysLabel);
+  hStackPanelRight-&gt;Children-&gt;Add(hMetricsStack);
+  hStackPanelRight-&gt;Children-&gt;Add(hASTStack);
+  hStackPanelRight-&gt;Children-&gt;Add(hSlocsStack);
+  hStackPanelRight-&gt;Children-&gt;Add(hDisplaysCommentLabel);
+
+  hStackPanelRight-&gt;Orientation = Orientation::Vertical;
+  hStackPanelRight-&gt;Margin = Thickness(10);
+
+  Border^ hBorderRight = gcnew Border();
+  hBorderRight-&gt;Child = hStackPanelRight;
+  hBorderRight-&gt;BorderBrush = Brushes::LightGray;
+  hBorderRight-&gt;BorderThickness = Thickness(1);
+  hBorderRight-&gt;MinWidth = 200;
+  hBorderRight-&gt;Margin = Thickness(5);
+  //hBorderRight-&gt;Width = 200;
+
+  hSetupGrid-&gt;SetColumn(hBorderRight, 1);
+  hSetupGrid-&gt;Children-&gt;Add(hBorderRight);
+</div>}}
+
+//----&lt; assemble Setup view &gt;----------------------------------------
+
+void WPFCppCliDemo::createSetupView()
+{<button id ="10026"onclick="myFunction26();toggleText26(this.id);">-</button><div id="26">
+  setUpGrid();
+  setUpSearchPanel();
+  setUpDisplaysPanel();
+</div>}}
+//----&lt; assemble Display Mode view &gt;---------------------------------
+
+void WPFCppCliDemo::createDisplayModeView()
+{<button id ="10027"onclick="myFunction27();toggleText27(this.id);">-</button><div id="27">
+  Border^ hProcBorder = gcnew Border();
+  hProcBorder-&gt;BorderThickness = Thickness(1);
+  hProcBorder-&gt;Margin = Thickness(15);
+  hProcBorder-&gt;BorderBrush = Brushes::LightGray;
+  hProcBorder-&gt;Child = hModeGrid;
+  hProcModeTab-&gt;Content = hProcBorder;
+
+  ColumnDefinition^ hCol1Def = gcnew ColumnDefinition();
+  hModeGrid-&gt;ColumnDefinitions-&gt;Add(hCol1Def);
+
+  Label^ hRsltModeLabel = gcnew Label();
+  hRsltModeLabel-&gt;Content = "Results mode";
+  hRsltMode_-&gt;IsChecked = userSettings_.rslt;
+  StackPanel^ hRsltStack = gcnew StackPanel();
+  hRsltStack-&gt;Orientation = Orientation::Horizontal;
+  hRsltStack-&gt;Children-&gt;Add(hRsltMode_);
+  hRsltStack-&gt;Children-&gt;Add(hRsltModeLabel);
+
+  Label^ hDemoModeLabel = gcnew Label();
+  hDemoModeLabel-&gt;Content = "Demo mode";
+  hDemoMode_-&gt;IsChecked = userSettings_.demo;
+  StackPanel^ hDemoStack = gcnew StackPanel();
+  hDemoStack-&gt;Orientation = Orientation::Horizontal;
+  hDemoStack-&gt;Children-&gt;Add(hDemoMode_);
+  hDemoStack-&gt;Children-&gt;Add(hDemoModeLabel);
+
+  Label^ hDbugModeLabel = gcnew Label();
+  hDbugModeLabel-&gt;Content = "DBug mode";
+  hDbugMode_-&gt;IsChecked = userSettings_.dbug;
+  StackPanel^ hDbugStack = gcnew StackPanel();
+  hDbugStack-&gt;Orientation = Orientation::Horizontal;
+  hDbugStack-&gt;Children-&gt;Add(hDbugMode_);
+  hDbugStack-&gt;Children-&gt;Add(hDbugModeLabel);
+
+  Label^ hLogFileModeLabel = gcnew Label();
+  hLogFileModeLabel-&gt;Content = "Log file mode";
+  hLogFileMode_-&gt;IsChecked = userSettings_.logfile;
+  StackPanel^ hLogFileStack = gcnew StackPanel();
+  hLogFileStack-&gt;Orientation = Orientation::Horizontal;
+  hLogFileStack-&gt;Children-&gt;Add(hLogFileMode_);
+  hLogFileStack-&gt;Children-&gt;Add(hLogFileModeLabel);
+
+  StackPanel^ hStackPanel = gcnew StackPanel();
+  hStackPanel-&gt;Children-&gt;Add(hRsltStack);
+  hStackPanel-&gt;Children-&gt;Add(hDemoStack);
+  hStackPanel-&gt;Children-&gt;Add(hDbugStack);
+  hStackPanel-&gt;Children-&gt;Add(hLogFileStack);
+  hStackPanel-&gt;Orientation = Orientation::Vertical;
+  hStackPanel-&gt;Margin = Thickness(30);
+
+  hModeGrid-&gt;SetColumn(hStackPanel, 0);
+  hModeGrid-&gt;Children-&gt;Add(hStackPanel);
+</div>}}
+//----&lt; set up command line for Analyzer.exe &gt;-----------------------
+
+void WPFCppCliDemo::setCmdLineArgs()
+{<button id ="10028"onclick="myFunction28();toggleText28(this.id);">-</button><div id="28">
+  cmdLine_ = "\"" + path_ + "\"";
+  if (hHdrs_-&gt;IsChecked)
+    cmdLine_ += " *.h";
+  if (hImpls_-&gt;IsChecked)
+    cmdLine_ += " *.cpp";
+  if (hCSharp_-&gt;IsChecked)
+    cmdLine_ += " *.cs";
+  if (hUPatt_-&gt;IsChecked)
+  {
+    for (size_t i = 0; i &lt; hUPattList_-&gt;Items-&gt;Count; ++i)
+    {
+      if(hUPattList_-&gt;Items[i]-&gt;ToString() != "FolderSelection")
+        cmdLine_ += " " + hUPattList_-&gt;Items[i];
+    }
+  }
+  if (hSlocs_-&gt;IsChecked)
+    cmdLine_ += " /s";
+  if (hAST_-&gt;IsChecked)
+    cmdLine_ += " /a";
+  if (hMetrics_-&gt;IsChecked)
+    cmdLine_ += " /m";
+  if (hRsltMode_-&gt;IsChecked)
+    cmdLine_ += " /r";
+  if (hDemoMode_-&gt;IsChecked)
+    cmdLine_ += " /d";
+  if (hDbugMode_-&gt;IsChecked)
+    cmdLine_ += " /b";
+  if (hLogFileMode_-&gt;IsChecked)
+    cmdLine_ += " /f";
+</div>}}
+//----&lt; execute Analyzer.exe as a separate process &gt;----------------0
+
+void WPFCppCliDemo::doExecute()
+{<button id ="10029"onclick="myFunction29();toggleText29(this.id);">-</button><div id="29">
+  Console::Clear();
+  ProcessStartInfo^ psi = gcnew ProcessStartInfo();
+  psi-&gt;UseShellExecute = false;
+  /*
+  *  Look for Analyzer executable in directory where GUI was started.
+  */
+  String^ analyzerPath = Path::GetFullPath(Assembly::GetExecutingAssembly()-&gt;Location);
+  analyzerPath = Path::GetDirectoryName(analyzerPath);
+  if (!System::IO::Directory::Exists(analyzerPath))
+  {
+    throw gcnew Exception("invalid analyzer path");
+  }
+  analyzerPath += "\\CodeAnalyzer.exe";
+  try {
+    analyzerPath = System::IO::Path::GetFullPath(analyzerPath);
+    psi-&gt;FileName = analyzerPath;
+    setCmdLineArgs();
+    psi-&gt;Arguments = cmdLine_;
+    Process^ p = Process::Start(psi);
+  }
+  catch (Exception^ ex)
+  {
+    // we get here if file spec is invalid
+
+    Console::Write("\n{0} = {1}", ex-&gt;Message, analyzerPath);
+    Console::Write("\n{0}\n", "try rebuilding CodeAnalyzer");
+  }
+  saveUserSettings();
+</div>}}
+//----&lt; event handler for Start Analysis Button &gt;--------------------
+
+void WPFCppCliDemo::execute(Object^ sender, RoutedEventArgs^ args)
+{<button id ="10030"onclick="myFunction30();toggleText30(this.id);">-</button><div id="30">
+  setCmdLineArgs();
+  doExecute();
+</div>}}
+//----&lt; event handler for Browse Button &gt;----------------------------
+/*
+*  - Used in both Execution and Setup Views.
+*  - Uses an OpenFileDialog so we can select either files or folders.
+*  - Always clears file list on browse.
+*/
+void WPFCppCliDemo::browseForFolder(Object^ sender, RoutedEventArgs^ args)
+{<button id ="10031"onclick="myFunction31();toggleText31(this.id);">-</button><div id="31">
+  String^ defaultFileName = "FolderSelection";
+  System::Windows::Forms::DialogResult result;
+
+  hOpenFileDialog-&gt;CheckPathExists = true;
+  hOpenFileDialog-&gt;CheckFileExists = false;
+  hOpenFileDialog-&gt;ShowReadOnly = false;
+  hOpenFileDialog-&gt;ReadOnlyChecked = true;
+  hOpenFileDialog-&gt;ValidateNames = false;
+  hOpenFileDialog-&gt;Multiselect = true;
+  hOpenFileDialog-&gt;FileName = defaultFileName;
+  hOpenFileDialog-&gt;InitialDirectory = hExecuteViewTextBox_-&gt;Text;
+  result = hOpenFileDialog-&gt;ShowDialog();
+
+  if (result == System::Windows::Forms::DialogResult::OK)
+  {
+    hUPattList_-&gt;Items-&gt;Clear();
+    array&lt;String^&gt;^ fileNames = hOpenFileDialog-&gt;FileNames;
+    String^ path = System::IO::Path::GetDirectoryName(fileNames[0]);
+
+    for (int i = 0; i &lt; fileNames-&gt;Length; ++i)
+    {
+      String^ name = System::IO::Path::GetFileName(fileNames[i]);
+      hUPattList_-&gt;Items-&gt;Add(name);
+    }
+    hExecuteViewTextBox_-&gt;Text = path;
+    hSetupViewTextBox_-&gt;Text = path;
+    path_ = path;
+    hExecuteViewStartButton_-&gt;IsEnabled = true;
+    if (hUPattList_-&gt;Items-&gt;Count == 0)
+      return;
+
+    // change settings depending on file or folder selection
+
+    String^ debug = hUPattList_-&gt;Items[0]-&gt;ToString();
+
+    if (hUPattList_-&gt;Items[0]-&gt;ToString() == defaultFileName)
+    {
+      hHdrs_-&gt;IsChecked = true;
+      hImpls_-&gt;IsChecked = true;
+      hCSharp_-&gt;IsChecked = true;
+      hUPatt_-&gt;IsChecked = false;
+    }
+    else
+    {
+      hHdrs_-&gt;IsChecked = false;
+      hImpls_-&gt;IsChecked = false;
+      hCSharp_-&gt;IsChecked = false;
+      hUPatt_-&gt;IsChecked = true;
+    }
+  }
+</div>}}
+//----&lt; event handler for Setup Browse Button &gt;----------------------
+/*
+*  - Used in both Execution and Setup Views.
+*  - Uses an OpenFileDialog so we can select either files or folders.
+*  - Clears file list only if clear CheckBox on Setup View is checked.
+*/
+void WPFCppCliDemo::browseForFolderEx(Object^ sender, RoutedEventArgs^ args)
+{<button id ="10032"onclick="myFunction32();toggleText32(this.id);">-</button><div id="32">
+  String^ defaultFileName = "FolderSelection";
+  System::Windows::Forms::DialogResult result;
+
+  hOpenFileDialog-&gt;CheckPathExists = true;
+  hOpenFileDialog-&gt;CheckFileExists = false;
+  hOpenFileDialog-&gt;ShowReadOnly = false;
+  hOpenFileDialog-&gt;ReadOnlyChecked = true;
+  hOpenFileDialog-&gt;ValidateNames = false;
+  hOpenFileDialog-&gt;Multiselect = true;
+  hOpenFileDialog-&gt;FileName = defaultFileName;
+  hOpenFileDialog-&gt;InitialDirectory = hExecuteViewTextBox_-&gt;Text;
+  result = hOpenFileDialog-&gt;ShowDialog();
+
+  if (result == System::Windows::Forms::DialogResult::OK)
+  {
+    if(hClear_-&gt;IsChecked)
+      hUPattList_-&gt;Items-&gt;Clear();
+    array&lt;String^&gt;^ fileNames = hOpenFileDialog-&gt;FileNames;
+    String^ path = System::IO::Path::GetDirectoryName(fileNames[0]);
+
+    for (int i = 0; i &lt; fileNames-&gt;Length; ++i)
+    {
+      String^ name = System::IO::Path::GetFileName(fileNames[i]);
+      hUPattList_-&gt;Items-&gt;Add(name);
+    }
+    if (hClear_-&gt;IsChecked)
+    {
+      hExecuteViewTextBox_-&gt;Text = path;
+      hSetupViewTextBox_-&gt;Text = path;
+      path_ = path;
+    }
+    hExecuteViewStartButton_-&gt;IsEnabled = true;
+
+    // change settings depending on file or folder selection
+
+    String^ debug = hUPattList_-&gt;Items[0]-&gt;ToString();
+
+    if (hClear_-&gt;IsChecked && hUPattList_-&gt;Items[0]-&gt;ToString() == defaultFileName)
+    {
+      hHdrs_-&gt;IsChecked = true;
+      hImpls_-&gt;IsChecked = true;
+      hCSharp_-&gt;IsChecked = true;
+      hUPatt_-&gt;IsChecked = false;
+    }
+    else
+    {
+      hHdrs_-&gt;IsChecked = false;
+      hImpls_-&gt;IsChecked = false;
+      hCSharp_-&gt;IsChecked = false;
+      hUPatt_-&gt;IsChecked = true;
+    }
+  }
+</div>}}
+//----&lt; event handler for Window Loaded event &gt;----------------------
+
+void WPFCppCliDemo::OnLoaded(Object^ sender, RoutedEventArgs^ args)
+{<button id ="10033"onclick="myFunction33();toggleText33(this.id);">-</button><div id="33">
+  hExecuteViewTextBox_-&gt;Text = path_;
+  hSetupViewTextBox_-&gt;Text = path_;
+</div>}}
+//----&lt; event handler for Window unloading event &gt;-------------------
+
+void WPFCppCliDemo::Unloading(Object^ sender, System::ComponentModel::CancelEventArgs^ args)
+{<button id ="10034"onclick="myFunction34();toggleText34(this.id);">-</button><div id="34">
+  saveUserSettings();
+</div>}}
+//----&lt; event handler for manual changes to path in textbox &gt;--------
+
+void WPFCppCliDemo::OnExecuteViewTextChanged(Object^ sender, RoutedEventArgs^ args)
+{<button id ="10035"onclick="myFunction35();toggleText35(this.id);">-</button><div id="35">
+  path_ = hExecuteViewTextBox_-&gt;Text;
+  hSetupViewTextBox_-&gt;Text = path_;
+</div>}}
+//----&lt; event handler for manual changes to path in textbox &gt;--------
+
+void WPFCppCliDemo::OnSetupViewTextChanged(Object^ sender, RoutedEventArgs^ args)
+{<button id ="10036"onclick="myFunction36();toggleText36(this.id);">-</button><div id="36">
+  path_ = hSetupViewTextBox_-&gt;Text;
+  hExecuteViewTextBox_-&gt;Text = path_;
+</div>}}
+
+/////////////////////////////////////////////////////////////////////
+// Not used now:
+//
+//String^ WPFCppCliDemo::toSystemString(std::string& str)
+//{
+//  StringBuilder^ pStr = gcnew StringBuilder();
+//  for (size_t i = 0; i &lt; str.size(); ++i)
+//    pStr-&gt;Append((Char)str[i]);
+//  return pStr-&gt;ToString();
+//}
+//
+//std::string WPFCppCliDemo::toStdString(String^ pStr)
+//{
+//  std::string dst;
+//  for (int i = 0; i &lt; pStr-&gt;Length; ++i)
+//    dst += (char)pStr[i];
+//  return dst;
+//}
+//
+// Note:
+// The comments, below, are placed here to show you how to convert to a
+// Windows application.  You don't want to do that for this project, but
+// it is useful to know how to do this.
+
+[STAThread]
+//int _stdcall WinMain()
+int main(array&lt;System::String^&gt;^ args)
+{<button id ="10037"onclick="myFunction37();toggleText37(this.id);">-</button><div id="37">
+  //MSG msg;
+  //Console::WriteLine(L"\n Starting WPFCppCliDemo");
+  //while ((GetMessage(&msg, NULL, 0, 0)) != 0)
+  //{
+  //  TranslateMessage(&msg);
+  //  DispatchMessage(&msg);
+  //}
+
+  Application^ app = gcnew Application();
+  app-&gt;Run(gcnew WPFCppCliDemo());
+  Console::WriteLine(L"\n\n");
+}</PRE> </body> </html>

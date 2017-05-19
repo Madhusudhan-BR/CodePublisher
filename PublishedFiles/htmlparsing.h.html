@@ -1,0 +1,221 @@
+<!----------------------------------------------------------------------------../PublishedFiles/htmlparsing.h.html - output HTML file for Project #3 Published 5 April 2017 Madhusudhan.B.R, CSE687 - Object Oriented Design, Spring 2017-----------------------------------------------------------------------------> <html> <head>
+ 
+    <link rel="stylesheet" type = "text/css"  href="stylesheet.css"/>  
+ <script type="text/javascript" src="script.js"></script></head> <body> <h4>htmlparsing.h<br> Dependent files : 
+<h4> <a href = "htmlparsing.h.html">htmlparsing.h </a> </h4>
+<h4> <a href = "Convert.cpp.html">Convert.cpp </a> </h4>
+<h4> <a href = "Utilities.cpp.html">Utilities.cpp </a> </h4>
+<h4> <a href = "typetable.h.html">typetable.h </a> </h4>
+<h4> <a href = "FileSystem.h.html">FileSystem.h </a> </h4>
+<PRE>
+
+#pragma once
+/////////////////////////////////////////////////////////////////////
+// htmlparsing.h - tHIS HEADER FILE CREATES HTML FILLES            //
+// ver 1                                                           //
+//-----------------------------------------------------------------//
+// Madhusudhan B R SUID-914198627                                  //
+// All rights granted provided this copyright notice is retained   //
+//-----------------------------------------------------------------//
+// Language:    C++, Visual Studio 2015                            //
+// Platform:    Mac 15inch   , Windows 10                          //
+// Application: Project #2, CSE687 - Object Oriented Design, S2017 //
+// Author:      Madhusudhan.B.R, Syracuse University.		       //
+//									                               //
+/////////////////////////////////////////////////////////////////////
+/*
+* Package Operations:
+* -------------------
+* Thisfile shows all the requiremnts met.
+*
+*
+*
+*
+* -manual information
+* -maintenance information
+*
+*
+*
+*
+* Required Files :
+*y-------------- -
+*stringlyConnectedComponents.h
+*AST
+T
+
+* Maintenance History :
+*-------------------- -
+*ver 1.0 : 04 - 5 - 2017
+* HTMLPARSING.H
+*
+*
+*
+*
+*
+*
+*
+* -first release
+*/
+#include &lt;sstream&gt;
+#include &lt;string&gt;
+#include &lt;vector&gt;
+#include &lt;map&gt;
+#include &lt;unordered_map&gt;
+#include &lt;functional&gt;
+#include &lt;algorithm&gt;
+#include &lt;exception&gt;
+#include &lt;iomanip&gt;
+#include &lt;chrono&gt;
+#include &lt;ctime&gt;
+#include &lt;fstream&gt;
+#include &lt;cstdio&gt;
+#include &lt;iostream&gt;
+#include "../FileSystem/FileSystem.h"
+#include "../TypeTable/typetable.h"
+
+class htmlHandle {<button id ="10000"onclick="myFunction0();toggleText0(this.id);">-</button><div id="0">
+public :
+	void htmlCreator(std::string Files,std::vector&lt;std::string&gt; depFiles, std::unordered_map&lt;std::string, std::vector&lt;CodeAnalysis::lineNum&gt;&gt; collapseDB, std::ofstream& js);
+	void addPlusPlus(std::ifstream& inStream, std::ofstream& outStream, std::unordered_map&lt;std::string, std::vector&lt;CodeAnalysis::lineNum&gt;&gt; collapseDB, std::string filename, std::ofstream& js);
+	
+</div>}};
+
+
+/*----------------- This cretes html filesand  associated style sheet ---------------------------------*/
+void htmlHandle::htmlCreator(std::string allFiles, std::vector&lt;std::string&gt; depFiles, std::unordered_map&lt;std::string,std::vector&lt;CodeAnalysis::lineNum&gt;&gt; collapseDB, std::ofstream& js) {<button id ="10001"onclick="myFunction1();toggleText1(this.id);">-</button><div id="1">
+
+	std::string files = allFiles;
+
+	//for (int i = 0; i &lt; files.size(); i++) {
+
+		std::string filename = allFiles;
+		std::string just_name = FileSystem::Path::getName(filename);
+		std::ifstream fin;
+		std::ofstream fout;
+		std::ofstream css;
+		fin.open(filename); //input file (must in the same folder)
+		if (fin.fail())
+		{
+			std::cout &lt;&lt; "Input file opening failed.\n" &lt;&lt;filename&lt;&lt;std::endl;
+			exit(1);
+		}
+
+		std::string temphtmlfile ="../PublishedFiles/" + just_name + ".html";
+		fout.open(temphtmlfile); //output file (in the same folder)
+		if (fout.fail())
+		{
+			std::cout &lt;&lt; "Output file opening failed.\n"&lt;&lt;temphtmlfile&lt;&lt;std::endl;
+			exit(1);
+		}
+
+		css.open("../PublishedFiles/stylesheet.css");
+		if (css.fail())
+		{
+			std::cout &lt;&lt; "Output file opening failed.\n";
+			exit(1);
+		}
+		css &lt;&lt;  "/*----------------------------------------------------------------------------   - External CSS style sheet file for Project #3 Published 5 April 2017 Madhusudhan.B.R, CSE687 - Object Oriented Design, Spring 2017-----------------------------------------------------------------------------*/";
+		css &lt;&lt; "body  { margin:20px; color:black;background-color:#eee;font-family:Consolas; font-weight:600; font-size:110%;}";
+		css.close();
+		fout &lt;&lt; "&lt;!----------------------------------------------------------------------------"&lt;&lt;temphtmlfile&lt;&lt;" - output HTML file for Project #3 Published 5 April 2017 Madhusudhan.B.R, CSE687 - Object Oriented Design, Spring 2017-----------------------------------------------------------------------------&gt;";
+		fout &lt;&lt; " &lt;html&gt; &lt;head&gt;\n "&lt;&lt;"\n    &lt;link rel=\""&lt;&lt;"stylesheet\""&lt;&lt;" type = \"text/css\""&lt;&lt;"  href=\""&lt;&lt;"stylesheet.css"&lt;&lt;"\"/&gt;  \n"&lt;&lt;" &lt;script type=\"text/javascript\" src=\"script.js\"&gt;&lt;/script&gt;" &lt;&lt;"&lt;/head&gt;" &lt;&lt;" &lt;body&gt; &lt;h4&gt;" &lt;&lt;just_name&lt;&lt;"&lt;br&gt;"&lt;&lt;" Dependent files : "&lt;&lt; std::endl;
+		for (int i = 0; i &lt; depFiles.size(); i++) {
+			std::string anchortarget = FileSystem::Path::getName(depFiles[i]) + ".html";
+			fout &lt;&lt; "&lt;h4&gt; &lt;a href = \"" &lt;&lt; anchortarget
+				&lt;&lt; "\"&gt;" &lt;&lt; FileSystem::Path::getName(depFiles[i]) &lt;&lt; " &lt;/a&gt; &lt;/h4&gt;" &lt;&lt; std::endl;
+		}
+		fout &lt;&lt; "&lt;PRE&gt;" &lt;&lt; std::endl; 
+		addPlusPlus(fin, fout,collapseDB,filename,js);
+		fout &lt;&lt; "&lt;/PRE&gt; &lt;/body&gt; &lt;/html&gt;" &lt;&lt; std::endl;
+		fin.close();
+		fout.close();
+	
+</div>}}
+/*----------------- This checks the line numbers where '{' is encountered ---------------------------------*/
+
+bool checkLineNum(std::unordered_map&lt;std::string,std::vector&lt;CodeAnalysis::lineNum&gt;&gt; collapseDB,std::string filename, int lineCount) {<button id ="10002"onclick="myFunction2();toggleText2(this.id);">-</button><div id="2">
+		
+	std::vector&lt;CodeAnalysis::lineNum&gt; tempClassVect;
+	filename = FileSystem::Path::getName(filename);
+	for (auto x : collapseDB)
+	{
+		//std::cout &lt;&lt; x.first &lt;&lt; std::endl;
+		if(x.first == filename){
+			for (int i = 0; i &lt; x.second.size(); i++) {
+				if (lineCount == x.second[i].startline)
+					return true;
+			}
+		}
+	}
+	return false;
+</div>}}
+
+/*----------------- This checks the line numbers where '}' is encountered ---------------------------------*/
+
+bool checkEndLineNum(std::unordered_map&lt;std::string, std::vector&lt;CodeAnalysis::lineNum&gt;&gt; collapseDB, std::string filename, int lineCount) {<button id ="10003"onclick="myFunction3();toggleText3(this.id);">-</button><div id="3">
+
+	std::vector&lt;CodeAnalysis::lineNum&gt; tempClassVect;
+	filename = FileSystem::Path::getName(filename);
+	for (auto x : collapseDB)
+	{
+		//std::cout &lt;&lt; x.first &lt;&lt; std::endl;
+		if (x.first == filename) {
+			for (int i = 0; i &lt; x.second.size(); i++) {
+				if (lineCount == x.second[i].endline)
+					return true;
+			}
+		}
+	}
+	return false;
+	return false;
+</div>}}
+
+/*----------------------------------------- This functions reads line by line and and then checks characters for &lt;,&gt;,{,} -------------------------*/
+void htmlHandle::addPlusPlus(std::ifstream& inStream, std::ofstream& outStream, std::unordered_map&lt;std::string, std::vector&lt;CodeAnalysis::lineNum&gt;&gt; collapseDB,std::string filename, std::ofstream& js)
+{<button id ="10004"onclick="myFunction4();toggleText4(this.id);">-</button><div id="4">
+	
+	std::string line;
+	int lineCount = 0;
+	//std::ofstream fout;
+	int i = 0; int a = 10000;
+	/*fout.open(tempjsfile);
+	if (fout.fail()){
+		std::cout &lt;&lt; "Output file opening failed.\n" &lt;&lt; tempjsfile &lt;&lt;"\n";
+		exit(1);
+}*/
+	while (std::getline(inStream, line)){	
+		 lineCount++;
+		outStream &lt;&lt; "\n";
+		//outStream &lt;&lt; std::endl;
+		for (int j = 0; j &lt; line.size(); j++) {
+		if (line[j] == '}' && checkEndLineNum(collapseDB, filename, lineCount)){
+				outStream &lt;&lt; "&lt;/div&gt;";
+				outStream &lt;&lt; line[j];
+			}
+				if (line[j] == '{' && checkLineNum(collapseDB, filename, lineCount)) {
+				outStream &lt;&lt; line[j];
+				outStream &lt;&lt; "&lt;button id =\"" &lt;&lt; a &lt;&lt;"\"" &lt;&lt;"onclick=\"myFunction";
+				outStream &lt;&lt; i;
+				outStream &lt;&lt; "(";
+				outStream &lt;&lt; ");toggleText" &lt;&lt; i &lt;&lt; "(this." &lt;&lt; "id" &lt;&lt; ");" &lt;&lt; "\"&gt;-&lt;/button&gt;";
+				//outStream &lt;&lt; "&lt;script&gt;";
+				
+				js &lt;&lt; "function myFunction" &lt;&lt; i &lt;&lt; "() {var x = document.getElementById('";
+				js &lt;&lt; i;
+				js &lt;&lt; "'); if (x.style.display ==  'none') {x.style.display = 'block';}else {x.style.display = 'none';}}" &lt;&lt; "function toggleText"&lt;&lt;i&lt;&lt;"("&lt;&lt;"buttonid" &lt;&lt;") {var el = document.getElementById("&lt;&lt;"buttonid"&lt;&lt;");if (el.firstChild.data == \"-\"){el.firstChild.data = \"+\";}else{el.firstChild.data = \"-\";}}";
+				//outStream &lt;&lt; "&lt;/script&gt;";
+				js &lt;&lt; "\n";
+				outStream &lt;&lt; "&lt;div id=\"" &lt;&lt; i  &lt;&lt; "\"&gt;";
+				i++; a++; 
+			}
+
+			else if (line[j] == '&lt;')
+				outStream &lt;&lt; "&lt;";
+			else if (line[j] == '&gt;')
+				outStream &lt;&lt; "&gt;";
+			else
+				outStream &lt;&lt; line[j];	
+</div>}}</div>}}</div>}}
+
+
+</PRE> </body> </html>

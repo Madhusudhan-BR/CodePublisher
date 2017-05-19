@@ -1,0 +1,224 @@
+<!----------------------------------------------------------------------------../PublishedFiles/executive.cpp.html - output HTML file for Project #3 Published 5 April 2017 Madhusudhan.B.R, CSE687 - Object Oriented Design, Spring 2017-----------------------------------------------------------------------------> <html> <head>
+ 
+    <link rel="stylesheet" type = "text/css"  href="stylesheet.css"/>  
+ <script type="text/javascript" src="script.js"></script></head> <body> <h4>executive.cpp<br> Dependent files : 
+<h4> <a href = "Convert.cpp.html">Convert.cpp </a> </h4>
+<h4> <a href = "Utilities.cpp.html">Utilities.cpp </a> </h4>
+<h4> <a href = "executive.cpp.html">executive.cpp </a> </h4>
+<h4> <a href = "Executive.h.html">Executive.h </a> </h4>
+<h4> <a href = "FileSystem.h.html">FileSystem.h </a> </h4>
+<h4> <a href = "typetable.h.html">typetable.h </a> </h4>
+<h4> <a href = "dependencyAnalysis.h.html">dependencyAnalysis.h </a> </h4>
+<h4> <a href = "NoSqlDb.h.html">NoSqlDb.h </a> </h4>
+<h4> <a href = "Display.h.html">Display.h </a> </h4>
+<h4> <a href = "htmlparsing.h.html">htmlparsing.h </a> </h4>
+<PRE>
+
+#pragma warning(disable : 4503)
+#pragma warning(disable : 4221)
+
+/////////////////////////////////////////////////////////////////////
+// Executive.cpp - Test EXecutive showing requirements met.        //
+// ver 1                                                           //
+//-----------------------------------------------------------------//
+// Madhusudhan B R SUID-914198627                                  //
+// All rights granted provided this copyright notice is retained   //
+//-----------------------------------------------------------------//
+// Language:    C++, Visual Studio 2015                            //
+// Platform:    Mac 15inch   , Windows 10                          //
+// Application: Project #2, CSE687 - Object Oriented Design, S2017 //
+// Author:      Madhusudhan.B.R, Syracuse University.		       //
+//									                               //
+/////////////////////////////////////////////////////////////////////
+/*
+* Package Operations:
+* -------------------
+* Thisfile shows all the requiremnts met.
+* 
+*
+*
+* - manual information
+* - maintenance information
+*
+*
+*
+*
+* Required Files:
+*display ---------------
+*stringlyConnectedComponents.h
+*AST
+Typetable.h
+
+* Maintenance History:
+*---------------------
+* ver 1.0 : 03-10-2017
+* excutive.cpp
+* var 2.0  05-04-2017
+* Functionality extended for project 3
+*
+*
+*
+*
+*
+* - first release
+*/
+
+#include "../Analyzer\Executive.h"
+#include &lt;sstream&gt;
+#include &lt;string&gt;
+#include &lt;vector&gt;
+#include &lt;map&gt;
+#include &lt;unordered_map&gt;
+#include &lt;functional&gt;
+#include &lt;algorithm&gt;
+#include &lt;exception&gt;
+#include &lt;iomanip&gt;
+#include &lt;chrono&gt;
+#include &lt;ctime&gt;
+#include &lt;Windows.h&gt;
+#include "testexecutive.h"
+#include "../Display/Display.h"
+#include "../StrongConnnectedComponent/stronglyConnectedComp.h"
+#include "../DependencyTable/dependencyAnalysis.h"
+#include "../TypeTable/typetable.h"
+#include "../Parser/Parser.h"
+#include "../FileSystem/FileSystem.h"
+#include "../FileMgr/FileMgr.h"
+#include "../Parser/ActionsAndRules.h"
+#include "../Parser/ConfigureParser.h"
+#include "../AbstractSyntaxTree/AbstrSynTree.h"
+#include "../Logger/Logger.h"
+#include "../Utilities/Utilities.h"
+#include &lt;fstream&gt;
+#include "../HtmlParsing/htmlparsing.h"
+
+void printTestExDepTable(){<button id ="10000"onclick="myFunction0();toggleText0(this.id);">-</button><div id="0">
+	
+
+	std::cout &lt;&lt; "\n -------------------------------------------------------------------------------------- \n";
+	std::cout &lt;&lt; "\n DependencyTable \n";
+	std::cout &lt;&lt; "\n -------------------------------------------------------------------------------------- \n";
+</div>}}
+
+void execSetup(CodeAnalysisExecutive &exec) {<button id ="10001"onclick="myFunction1();toggleText1(this.id);">-</button><div id="1">
+	exec.getSourceFiles();
+	exec.processSourceCode(true);
+	exec.complexityAnalysis();
+	exec.dispatchOptionalDisplays();
+	exec.flushLogger();
+	exec.displayMetricSummary(50, 10);
+	exec.flushLogger();
+	Rslt::write("\n");
+	std::ostringstream out;
+	out &lt;&lt; "\n  " &lt;&lt; std::setw(10) &lt;&lt; "searched" &lt;&lt; std::setw(6) &lt;&lt; exec.numDirs() &lt;&lt; " dirs";
+	out &lt;&lt; "\n  " &lt;&lt; std::setw(10) &lt;&lt; "processed" &lt;&lt; std::setw(6) &lt;&lt; exec.numFiles() &lt;&lt; " files";
+	Rslt::write(out.str());
+	Rslt::write("\n");
+	exec.stopLogger();
+	std::cout &lt;&lt; "\n  Code Analysis completed";
+
+</div>}}
+
+void execSetup2(CodeAnalysisExecutive &exec) {<button id ="10002"onclick="myFunction2();toggleText2(this.id);">-</button><div id="2">
+	exec.setDisplayModes();
+	exec.startLogger(std::cout);
+	std::ostringstream tOut("CodeAnalysis - Version 1.4");
+	Utils::sTitle(tOut.str(), 3, 92, tOut, '=');
+	Rslt::write(tOut.str());
+	Rslt::write("\n     " + exec.systemTime());
+	Rslt::flush();
+	
+</div>}}
+void requirements() {<button id ="10003"onclick="myFunction3();toggleText3(this.id);">-</button><div id="3">
+	std::cout &lt;&lt; "\n -------------------------------------------------------------------------------------- \n";
+	std::cout &lt;&lt; "\n Test Executive \n";
+	std::cout &lt;&lt; "\n -------------------------------------------------------------------------------------- \n";
+	std::cout &lt;&lt; "\n -------------------------------------------------------------------------------------- \n";
+	std::cout &lt;&lt; "\n Requirements 1 - 10 including collapse Satisfied \n";
+	std::cout &lt;&lt; "\n -------------------------------------------------------------------------------------- \n";
+
+</div>}}
+void	indexCreator(std::vector&lt;std::string&gt; keys) {<button id ="10004"onclick="myFunction4();toggleText4(this.id);">-</button><div id="4">
+
+	std::ofstream fout;
+	//FileMap fileMap = exec.getFileMap();
+	std::string temphtmlfile = "../PublishedFiles/index.html"  ;
+	fout.open(temphtmlfile);
+	if (fout.fail())
+	{
+		std::cout &lt;&lt; "Output index file opening failed.\n";
+		exit(1);
+	}
+	fout &lt;&lt; "&lt;!----------------------------------------------------------------------------" &lt;&lt; temphtmlfile &lt;&lt; " - output index.html HTML file for Project #3 Published 5 April 2017 Madhusudhan.B.R, CSE687 - Object Oriented Design, Spring 2017-----------------------------------------------------------------------------&gt;";
+	fout &lt;&lt; "&lt;html&gt; \n &lt;head&gt; \n" &lt;&lt; "\n    &lt;link rel=\"" &lt;&lt; "stylesheet\"" &lt;&lt; " type = \"text/css\"" &lt;&lt; "  href=\"" &lt;&lt; "stylesheet.css" &lt;&lt; "\"/&gt; &lt;/head&gt; &lt;body&gt; \n";
+	using Pair = std::pair&lt;Pattern, Files&gt;;
+	for (std::string key: keys) {
+		//for (File f : pair.second)
+		{	
+			string temp = FileSystem::Path::getName(key) + ".html";
+			fout &lt;&lt; "&lt;a href =\"";
+			fout &lt;&lt; temp;
+			fout &lt;&lt; "\"&gt;";
+			fout &lt;&lt; temp;
+			fout &lt;&lt; " &lt;/a&gt; &lt;br&gt; ";
+		}
+	}
+	fout.close();
+
+	std::string path = "file:///" + FileSystem::Path::getFullFileSpec("..\\PublishedFiles\\index.html");
+	std::wstring spath = std::wstring(path.begin(), path.end());
+	LPCWSTR swpath = spath.c_str();
+	LPCWSTR a = L"open";
+	LPCWSTR ie = L"iexplore.exe";
+	ShellExecute(NULL, a, ie, swpath, NULL, SW_SHOWDEFAULT);
+
+</div>}}
+int main(int argc, char* argv[]){<button id ="10005"onclick="myFunction5();toggleText5(this.id);">-</button><div id="5">
+	using namespace CodeAnalysis;
+	CodeAnalysisExecutive exec;
+	try {requirements();
+	 exec.defaultDependency = "../depXml.xml"; exec.defaultScc = "../SccXml.xml";
+		bool succeeded = exec.ProcessCommandLine(argc, argv);
+		if (!succeeded)
+		{return 1;}
+		execSetup2(exec);
+		exec.showCommandLineArguments(argc, argv);
+		Rslt::write("\n");
+		execSetup(exec);
+		FileMap fileMap = exec.getFileMap();
+		Files allFiles;
+		using Pair = std::pair&lt;Pattern, Files&gt;;
+		for (Pair pair : fileMap) {
+			for (File f : pair.second)
+				allFiles.push_back(f);}
+		TypeAnal ta;
+		ta.doTypeAnal();
+		dependencyAnalysis da;
+		NoSQLDB::NoSqlDb&lt;std::string&gt; table;
+		table = da.depAnal(ta, allFiles);
+		printTestExDepTable();
+		displayDependencyTable(table);
+		int i = 0;
+		std::ofstream js;
+		std::string tempjsfile = "../PublishedFiles/script.js";
+		js.open(tempjsfile);
+		if (js.fail()){
+			std::cout &lt;&lt; "Output file opening failed.\n";exit(1);}
+		js &lt;&lt; "/*----------------------------------------------------------------------------   - External Javacript  file for Project #3 Published 5 April 2017 Madhusudhan.B.R, CSE687 - Object Oriented Design, Spring 2017-----------------------------------------------------------------------------*/";
+		htmlHandle html;
+			std::vector&lt;std::string&gt; tableKeys = table.keys(); 
+			for (string tableKey : tableKeys) {
+				std::vector&lt;std::string&gt; tableChildren = table.value(tableKey).children; 
+				std::vector&lt;std::string&gt; temp;
+				auto last = std::unique(tableChildren.begin(), tableChildren.end());
+				tableChildren.erase(last, tableChildren.end());
+				html.htmlCreator(tableKey,tableChildren,ta.collapseDB,js);}
+			indexCreator(tableKeys);
+			std::string xml = table.toXML(exec.defaultDependency);
+			std::cout &lt;&lt; xml;
+}catch (std::exception& except){
+		exec.flushLogger();
+		std::cout &lt;&lt; "\n\n  caught exception in Executive::main: " + std::string(except.what()) + "\n\n";
+		exec.stopLogger();
+		return 1;</div>}}
+return 0;}</PRE> </body> </html>

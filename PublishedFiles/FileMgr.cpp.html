@@ -1,0 +1,84 @@
+<!----------------------------------------------------------------------------../PublishedFiles/FileMgr.cpp.html - output HTML file for Project #3 Published 5 April 2017 Madhusudhan.B.R, CSE687 - Object Oriented Design, Spring 2017-----------------------------------------------------------------------------> <html> <head>
+ 
+    <link rel="stylesheet" type = "text/css"  href="stylesheet.css"/>  
+ <script type="text/javascript" src="script.js"></script></head> <body> <h4>FileMgr.cpp<br> Dependent files : 
+<h4> <a href = "IFileMgr.h.html">IFileMgr.h </a> </h4>
+<h4> <a href = "FileMgr.h.html">FileMgr.h </a> </h4>
+<h4> <a href = "FileMgr.cpp.html">FileMgr.cpp </a> </h4>
+<h4> <a href = "Convert.cpp.html">Convert.cpp </a> </h4>
+<h4> <a href = "Utilities.cpp.html">Utilities.cpp </a> </h4>
+<h4> <a href = "FileSystem.h.html">FileSystem.h </a> </h4>
+<PRE>
+
+/////////////////////////////////////////////////////////////////////
+// FileMgr.cpp - find files matching specified patterns            //
+//               on a specified path                               //
+// ver 2.2                                                         //
+// Jim Fawcett, CSE687 - Object Oriented Design, Spring 2016       //
+/////////////////////////////////////////////////////////////////////
+
+#include "FileMgr.h"
+#include &lt;iostream&gt;
+
+using namespace FileManager;
+
+IFileMgr* FileMgr::pInstance_;
+
+IFileMgr* IFileMgr::getInstance()
+{<button id ="10000"onclick="myFunction0();toggleText0(this.id);">-</button><div id="0">
+  return FileMgr::getInstance();
+</div>}}
+
+#ifdef TEST_FILEMGR
+
+using namespace FileManager;
+
+struct FileHandler : IFileEventHandler
+{
+  void execute(const std::string& fileSpec)
+  {<button id ="10001"onclick="myFunction1();toggleText1(this.id);">-</button><div id="1">
+    std::cout &lt;&lt; "\n  --   " &lt;&lt; fileSpec;
+  </div>}}
+};
+
+struct DirHandler : IDirEventHandler
+{
+  void execute(const std::string& dirSpec)
+  {<button id ="10002"onclick="myFunction2();toggleText2(this.id);">-</button><div id="2">
+    std::cout &lt;&lt; "\n  ++ " &lt;&lt; dirSpec;
+  </div>}}
+};
+
+struct DoneHandler : IDoneEventHandler
+{
+  void execute(size_t numFilesProcessed)
+  {<button id ="10003"onclick="myFunction3();toggleText3(this.id);">-</button><div id="3">
+    std::cout &lt;&lt; "\n\n  Processed " &lt;&lt; numFilesProcessed &lt;&lt; " files";
+  </div>}}
+};
+int main()
+{<button id ="10004"onclick="myFunction4();toggleText4(this.id);">-</button><div id="4">
+  std::cout &lt;&lt; "\n  Testing FileMgr";
+  std::cout &lt;&lt; "\n =================";
+
+  std::string path = FileSystem::Path::getFullFileSpec("..");
+  IFileMgr* pFmgr = FileMgrFactory::create(path);
+
+  FileHandler fh;
+  DirHandler dh;
+  DoneHandler dnh;
+
+  pFmgr-&gt;regForFiles(&fh);
+  pFmgr-&gt;regForDirs(&dh);
+  pFmgr-&gt;regForDone(&dnh);
+
+  pFmgr-&gt;addPattern("*.h");
+  pFmgr-&gt;addPattern("*.cpp");
+  //pFmgr-&gt;addPattern("*.log");
+
+  pFmgr-&gt;search();
+
+  std::cout &lt;&lt; "\n\n";
+  return 0;
+</div>}}
+#endif</PRE> </body> </html>

@@ -1,0 +1,291 @@
+<!----------------------------------------------------------------------------../PublishedFiles/DateTime.cpp.html - output HTML file for Project #3 Published 5 April 2017 Madhusudhan.B.R, CSE687 - Object Oriented Design, Spring 2017-----------------------------------------------------------------------------> <html> <head>
+ 
+    <link rel="stylesheet" type = "text/css"  href="stylesheet.css"/>  
+ <script type="text/javascript" src="script.js"></script></head> <body> <h4>DateTime.cpp<br> Dependent files : 
+<h4> <a href = "DateTime.h.html">DateTime.h </a> </h4>
+<h4> <a href = "DateTime.cpp.html">DateTime.cpp </a> </h4>
+<PRE>
+
+/////////////////////////////////////////////////////////////////////
+// DateTime.cpp - represents clock time                            //
+// ver 1.0                                                         //
+// Jim Fawcett, CSE687 - Object Oriented Design, Spring 2017       //
+/////////////////////////////////////////////////////////////////////
+
+#include "DateTime.h"
+#include "../Utilities/Utilities.h"
+#include &lt;string&gt;
+#include &lt;iomanip&gt;
+#include &lt;sstream&gt;
+#include &lt;iostream&gt;
+#include &lt;unordered_map&gt;
+
+//----&lt; replaces std::ctime using ctime_s &gt;--------------------------
+
+char* DateTime::ctime(const std::time_t* pTime)
+{<button id ="10000"onclick="myFunction0();toggleText0(this.id);">-</button><div id="0">
+  const rsize_t buffSize = 26;
+  static char buffer[buffSize];
+  errno_t err = ctime_s(buffer, buffSize, pTime);
+  return buffer;
+</div>}}
+//----&lt; replaces std::localtime using localtime_s &gt;------------------
+
+std::tm* DateTime::localtime(const std::time_t* pTime)
+{<button id ="10001"onclick="myFunction1();toggleText1(this.id);">-</button><div id="1">
+  static std::tm result;
+  errno_t err = localtime_s(&result, pTime);
+  return &result;
+</div>}}
+//----&lt; construct DateTime instance with current system time &gt;-------
+
+DateTime::DateTime()
+{<button id ="10002"onclick="myFunction2();toggleText2(this.id);">-</button><div id="2">
+  tp_ = SysClock::now();
+</div>}}
+//----&lt; construct DateTime from formatted time string &gt;--------------
+/* 
+ * Helper function that reads each part of the formatted string 
+ */
+int readDateTimePart(int& part, std::istringstream& in)
+{<button id ="10003"onclick="myFunction3();toggleText3(this.id);">-</button><div id="3">
+  if (in.peek() == ':')
+    in.get();
+  in &gt;&gt; part;
+  //std::cout &lt;&lt; "\n  -- part = " &lt;&lt; part &lt;&lt; " --";
+  if (in.good())
+    return part;
+  return -1;
+</div>}}
+//----&lt; makes a DateTime instance from a formatted string &gt;----------
+/*
+*  Throws exception if string is an invalid DateTime string
+*/
+DateTime::DateTime(std::string dtStr)
+{<button id ="10004"onclick="myFunction4();toggleText4(this.id);">-</button><div id="4">
+  static std::unordered_map&lt;std::string, size_t&gt; months = {
+    { "Jan", 1 }, { "Feb", 2 }, { "Mar", 3 }, { "Apr", 4 }, 
+    { "May", 5 }, { "Jun", 6 }, { "Jul", 7 }, { "Aug", 8 }, 
+    { "Sep", 9 }, { "Oct", 10 }, { "Nov", 11 }, { "Dec", 12 } 
+  };
+  std::istringstream in(dtStr);
+  std::string day, month;
+  in &gt;&gt; day;
+  in &gt;&gt; month;
+  if (!in.good())
+    throw std::exception("invalid DateTime string");
+  std::tm date;
+  date.tm_mon =(int) months[month] - 1;
+  readDateTimePart(date.tm_mday, in);
+  readDateTimePart(date.tm_hour, in);
+  readDateTimePart(date.tm_min, in);
+  readDateTimePart(date.tm_sec, in);
+  readDateTimePart(date.tm_year, in);
+  date.tm_year -= 1900;
+  date.tm_isdst = -1;
+  std::time_t time = std::mktime(&date);
+  if (time == -1)
+  {
+    throw "invalid system time";
+  }
+  tp_ = SysClock::from_time_t(time);  
+</div>}}
+//----&lt; cast operator converts to time formatted string &gt;------------
+
+DateTime::operator std::string()
+{<button id ="10005"onclick="myFunction5();toggleText5(this.id);">-</button><div id="5">
+  return time();
+</div>}}
+//----&lt; construct DateTime instance from time point &gt;----------------
+
+DateTime::DateTime(const DateTime::TimePoint& tp) : tp_(tp) {}
+
+//----&lt; make a time from integral parts &gt;----------------------------
+
+DateTime::TimePoint DateTime::makeTime(
+  size_t year, size_t mon, size_t day, size_t hour, size_t min, size_t sec
+)
+{<button id ="10006"onclick="myFunction6();toggleText6(this.id);">-</button><div id="6">
+  struct std::tm t;
+  t.tm_sec = (int)sec;
+  t.tm_min = (int)min;
+  t.tm_hour = (int)hour;
+  t.tm_mday = (int)day;
+  t.tm_mon = (int)mon-1;
+  t.tm_year = (int)year - 1900;
+  t.tm_isdst = (int)-1;
+  std::time_t time = std::mktime(&t);
+  if (time == -1)
+  {
+    throw "invalid system time";
+  }
+  return SysClock::from_time_t(time);
+</div>}}
+//----&lt; make duration from integral parts &gt;--------------------------
+
+DateTime::Duration DateTime::makeDuration(
+  size_t hour, size_t min, size_t sec, size_t millisec
+)
+{<button id ="10007"onclick="myFunction7();toggleText7(this.id);">-</button><div id="7">
+  Duration dur = 
+    std::chrono::milliseconds(millisec) + 
+    std::chrono::seconds(sec) + 
+    std::chrono::minutes(min) + 
+    std::chrono::hours(hour);
+  return dur;
+</div>}}
+//----&lt; set time to system time &gt;------------------------------------
+
+std::string DateTime::now()
+{<button id ="10008"onclick="myFunction8();toggleText8(this.id);">-</button><div id="8">
+  TimePoint tp = SysClock::now();
+  std::time_t t = SysClock::to_time_t(tp);
+  std::string ts = ctime(&t);
+  ts.resize(ts.size() - 1);
+  return ts;
+</div>}}
+//----&lt; return internal time point &gt;---------------------------------
+
+DateTime::TimePoint DateTime::timepoint()
+{<button id ="10009"onclick="myFunction9();toggleText9(this.id);">-</button><div id="9">
+  return tp_;
+</div>}}
+//----&lt; return seconds from Jan 1 1990 at midnight &gt;-----------------
+
+size_t DateTime::ticks()
+{<button id ="10010"onclick="myFunction10();toggleText10(this.id);">-</button><div id="10">
+  auto int_sec = std::chrono::duration_cast&lt;std::chrono::seconds&gt;(tp_.time_since_epoch());
+  return static_cast&lt;size_t&gt;(int_sec.count());
+</div>}}
+//----&lt; return formatted time string &gt;-------------------------------
+
+std::string DateTime::time()
+{<button id ="10011"onclick="myFunction11();toggleText11(this.id);">-</button><div id="11">
+  std::time_t t = SysClock::to_time_t(tp_);
+  std::string ts = ctime(&t);
+  ts.resize(ts.size() - 1);
+  return ts;
+</div>}}
+//----&lt; compare DateTime instances &gt;---------------------------------
+
+bool DateTime::operator&lt;(const DateTime& dt)
+{<button id ="10012"onclick="myFunction12();toggleText12(this.id);">-</button><div id="12">
+  return tp_ &lt; dt.tp_;
+</div>}}
+//----&lt; compare DateTime instances &gt;---------------------------------
+
+bool DateTime::operator&gt;(const DateTime& dt)
+{<button id ="10013"onclick="myFunction13();toggleText13(this.id);">-</button><div id="13">
+  return tp_ &gt; dt.tp_;
+</div>}}
+//----&lt; add a duration to DateTime instance &gt;------------------------
+
+DateTime DateTime::operator+=(const DateTime::Duration& dur)
+{<button id ="10014"onclick="myFunction14();toggleText14(this.id);">-</button><div id="14">
+  tp_ += dur;
+  return *this;
+</div>}}
+//----&lt; make DateTime from instance time plus duration &gt;-------------
+
+DateTime DateTime::operator+(const DateTime::Duration& dur)
+{<button id ="10015"onclick="myFunction15();toggleText15(this.id);">-</button><div id="15">
+
+  return DateTime(tp_ + dur);
+</div>}}
+//----&lt; subtract a duration from instance &gt;--------------------------
+
+DateTime DateTime::operator-=(const DateTime::Duration& dur)
+{<button id ="10016"onclick="myFunction16();toggleText16(this.id);">-</button><div id="16">
+  tp_ -= dur;
+  return *this;
+</div>}}
+//---- make DateTime from instance time minus duration &gt;-------------
+
+DateTime DateTime::operator-(const DateTime::Duration& dur)
+{<button id ="10017"onclick="myFunction17();toggleText17(this.id);">-</button><div id="17">
+  return DateTime(tp_ - dur);
+</div>}}
+//----&lt; return year count &gt;------------------------------------------
+
+size_t DateTime::year()
+{<button id ="10018"onclick="myFunction18();toggleText18(this.id);">-</button><div id="18">
+  std::time_t t = SysClock::to_time_t(tp_);
+  std::tm tm = *localtime(&t);
+  return tm.tm_year;
+</div>}}
+//----&lt; return month count &gt;-----------------------------------------
+
+size_t DateTime::month()
+{<button id ="10019"onclick="myFunction19();toggleText19(this.id);">-</button><div id="19">
+  std::time_t t = SysClock::to_time_t(tp_);
+  std::tm tm = *localtime(&t);
+  return tm.tm_mon;
+</div>}}
+//----&lt; return day count &gt;-------------------------------------------
+
+size_t DateTime::day()
+{<button id ="10020"onclick="myFunction20();toggleText20(this.id);">-</button><div id="20">
+  std::time_t t = SysClock::to_time_t(tp_);
+  std::tm tm = *localtime(&t);
+  return tm.tm_mday;
+</div>}}
+//----&lt; return hour count &gt;------------------------------------------
+
+size_t DateTime::hour()
+{<button id ="10021"onclick="myFunction21();toggleText21(this.id);">-</button><div id="21">
+  std::time_t t = SysClock::to_time_t(tp_);
+  std::tm tm = *localtime(&t);
+  return tm.tm_hour;
+</div>}}
+//----&lt; return minutes count &gt;---------------------------------------
+
+size_t DateTime::minute()
+{<button id ="10022"onclick="myFunction22();toggleText22(this.id);">-</button><div id="22">
+  std::time_t t = SysClock::to_time_t(tp_);
+  std::tm tm = *localtime(&t);
+  return tm.tm_min;
+</div>}}
+//----&lt; return seconds count &gt;---------------------------------------
+
+size_t DateTime::second()
+{<button id ="10023"onclick="myFunction23();toggleText23(this.id);">-</button><div id="23">
+  std::time_t t = SysClock::to_time_t(tp_);
+  std::tm tm = *localtime(&t);
+  return tm.tm_sec;
+</div>}}
+
+//----&lt; test stub &gt;--------------------------------------------------
+
+#ifdef TEST_DATETIME
+
+#include &lt;iostream&gt;
+
+int main()
+{<button id ="10024"onclick="myFunction24();toggleText24(this.id);">-</button><div id="24">
+  Utilities::Title("Testing DateTime class");
+  try {
+    DateTime dt;
+    std::cout &lt;&lt; "\n  " &lt;&lt; dt.time();
+    dt += DateTime::makeDuration(24, 0);
+    std::cout &lt;&lt; "\n  " &lt;&lt; dt.time();
+    dt += DateTime::makeDuration(1, 10);
+    std::cout &lt;&lt; "\n  " &lt;&lt; dt.time();
+    DateTime now;
+    std::cout &lt;&lt; "\n  using cast operator: " &lt;&lt; static_cast&lt;std::string&gt;(now);
+
+    if (now &lt; dt)
+      std::cout &lt;&lt; "\n  " &lt;&lt; now.time() &lt;&lt; " is less than " &lt;&lt; dt.time();
+    else
+      std::cout &lt;&lt; "\n  " &lt;&lt; now.time() &lt;&lt; " is not less than " &lt;&lt; dt.time();
+    std::cout &lt;&lt; "\n  now.ticks() = " &lt;&lt; now.ticks();
+    std::cout &lt;&lt; "\n  constructing DateTime from formated DateTime string";
+    DateTime newDt(dt.time());
+    std::cout &lt;&lt; "\n  " &lt;&lt; newDt.time();
+  }
+  catch (std::exception& ex)
+  {
+    std::cout &lt;&lt; "\n\n  -- " &lt;&lt; ex.what() &lt;&lt; " --";
+  }
+  std::cout &lt;&lt; "\n\n";
+</div>}}
+#endif</PRE> </body> </html>

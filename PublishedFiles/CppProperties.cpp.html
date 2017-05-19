@@ -1,0 +1,160 @@
+<!----------------------------------------------------------------------------../PublishedFiles/CppProperties.cpp.html - output HTML file for Project #3 Published 5 April 2017 Madhusudhan.B.R, CSE687 - Object Oriented Design, Spring 2017-----------------------------------------------------------------------------> <html> <head>
+ 
+    <link rel="stylesheet" type = "text/css"  href="stylesheet.css"/>  
+ <script type="text/javascript" src="script.js"></script></head> <body> <h4>CppProperties.cpp<br> Dependent files : 
+<h4> <a href = "CppProperties.cpp.html">CppProperties.cpp </a> </h4>
+<h4> <a href = "CppProperties.h.html">CppProperties.h </a> </h4>
+<h4> <a href = "Convert.cpp.html">Convert.cpp </a> </h4>
+<h4> <a href = "Utilities.cpp.html">Utilities.cpp </a> </h4>
+<h4> <a href = "GrammarHelpers.cpp.html">GrammarHelpers.cpp </a> </h4>
+<PRE>
+
+/////////////////////////////////////////////////////////////////////
+// CppProperties.cpp - Defines read/write and read only properties //
+//                                                                 //
+// Jim Fawcett, CSE687 - Object Oriented Design, Spring 2017       //
+/////////////////////////////////////////////////////////////////////
+
+#ifdef TEST_CPPPROPERTIES
+
+#include "CppProperties.h"
+#include &lt;string&gt;
+#include &lt;iostream&gt;
+
+class X
+{<button id ="10000"onclick="myFunction0();toggleText0(this.id);">-</button><div id="0">
+public:
+  Property&lt;std::string&gt; name;
+  Property&lt;double&gt; isMutable;
+  Property&lt;const double&gt; pi = 3.1415927;
+  Property&lt;const std::string&gt; constName = "a const name";
+  void show()
+  {<button id ="10001"onclick="myFunction1();toggleText1(this.id);">-</button><div id="1">
+    std::cout &lt;&lt; "\n  name:      " &lt;&lt; name;
+    std::cout &lt;&lt; "\n  isMutable: " &lt;&lt; isMutable;
+    std::cout &lt;&lt; "\n  pi:        " &lt;&lt; pi;
+    std::cout &lt;&lt; "\n  constName: " &lt;&lt; constName;
+    std::cout &lt;&lt; "\n";
+  </div>}}
+</div>}};
+
+/////////////////////////////////////////////////////////////////////
+// Z class:
+// - demonstrates how to customize getter and setter functions
+//   without changing public interface of Z.
+// - That is important because it means that should we decide,
+//   after a class was published, that we should control the
+//   way the property behaves, we won't break existing clients.
+
+/*----&lt; demo function for custom getter and setter &gt;---------------*/
+
+std::string toUpper(const std::string& str)
+{<button id ="10002"onclick="myFunction2();toggleText2(this.id);">-</button><div id="2">
+  std::string upperS = str;
+  for (auto& c : upperS)
+    c = toupper(c);
+  return upperS;
+</div>}}
+
+/////////////////////////////////////////////////////////////////////
+// - We can also modify the behavior of the propert by overriding
+//   the property virtual functions.  That, however, modifies user
+//   interface.
+//
+class UpperCaseProperty : public Property&lt;std::string&gt;  // changes property name
+{<button id ="10003"onclick="myFunction3();toggleText3(this.id);">-</button><div id="3">
+public:
+  UpperCaseProperty(const std::string& s) 
+  { 
+    value = toUpper(s); 
+  </div>}}
+  virtual Property&lt;std::string&gt;& operator=(const std::string &s)
+  {<button id ="10004"onclick="myFunction4();toggleText4(this.id);">-</button><div id="4">
+    value = toUpper(s);
+    return *this;
+  </div>}}
+</div>}};
+
+class Y
+{<button id ="10005"onclick="myFunction5();toggleText5(this.id);">-</button><div id="5">
+public:
+  UpperCaseProperty name = "jim";
+</div>}};
+
+class Z
+{<button id ="10006"onclick="myFunction6();toggleText6(this.id);">-</button><div id="6">
+public:
+  Z()
+  {<button id ="10007"onclick="myFunction7();toggleText7(this.id);">-</button><div id="7">
+    name.newSetter(
+      [](const std::string& s) {<button id ="10008"onclick="myFunction8();toggleText8(this.id);">-</button><div id="8">
+        // normally you won't want to use console output - this is just for demo
+        std::cout &lt;&lt; "\n  setter converting property to uppercase";
+        return toUpper(s); 
+      </div>}}
+    );
+    // this also works:
+    // name.setter(toUpper);
+
+    name.newGetter(
+      [](const std::string& val) {<button id ="10009"onclick="myFunction9();toggleText9(this.id);">-</button><div id="9">
+      std::string s = val;
+      s[0] = tolower(s[0]);
+      // normally you won't want to use console output - this is just for demo
+      std::cout &lt;&lt; "\n  getter converting first character of property to lowercase";
+      return s;
+    </div>}}
+    );
+  </div>}}
+  Property&lt;std::string&gt; name;
+</div>}};
+
+int main()
+{<button id ="10010"onclick="myFunction10();toggleText10(this.id);">-</button><div id="10">
+  std::cout &lt;&lt; "\n  Demonstrate C++ Properties class";
+  std::cout &lt;&lt; "\n ==================================";
+
+  X x;
+  x.name = "Jim";
+  x.show();
+  std::cout &lt;&lt; "\n  setting isMutable to pi:";
+  std::cout &lt;&lt; "\n --------------------------";
+  x.isMutable = x.pi;
+  x.show();
+  
+  //x.constName = "a new name";  // fails to compile - that's good
+
+  std::cout &lt;&lt; "\n  making a copy of x, called newX with new name:";
+  std::cout &lt;&lt; "\n ------------------------------------------------";
+  X newX(x);
+  newX.name = "joe";
+  newX.show();
+
+  std::cout &lt;&lt; "\n";
+  std::cout &lt;&lt; "\n  demonstrate overriding property \"getter\" function to return capitalized name string";
+  std::cout &lt;&lt; "\n -------------------------------------------------------------------------------------";
+  Y y;
+  std::cout &lt;&lt; "\n  y.name = " &lt;&lt; y.name;
+  std::cout &lt;&lt; "\n";
+
+  std::cout &lt;&lt; "\n  demonstrate providing custom getter and setter functions";
+  std::cout &lt;&lt; "\n ----------------------------------------------------------";
+  std::cout &lt;&lt; "\n";
+
+  Z z;
+  z.name = "fawcett";
+  std::string temp = z.name;
+  std::cout &lt;&lt; "\n  z.name = " &lt;&lt; temp;
+  temp = (z.name).getValue();
+  std::cout &lt;&lt; "\n  name property's internal store value is: " &lt;&lt; temp;
+  std::cout &lt;&lt; "\n";
+
+  std::cout &lt;&lt; "\n  making a copy of z, called newZ:";
+  std::cout &lt;&lt; "\n ----------------------------------";
+  Z newZ(z);
+  temp = newZ.name;
+  std::cout &lt;&lt; "\n  newZ.name = " &lt;&lt; temp;
+
+  std::cout &lt;&lt; "\n\n";
+</div>}}
+#endif</PRE> </body> </html>

@@ -1,0 +1,130 @@
+<!----------------------------------------------------------------------------../PublishedFiles/NoSqlDb.cpp.html - output HTML file for Project #3 Published 5 April 2017 Madhusudhan.B.R, CSE687 - Object Oriented Design, Spring 2017-----------------------------------------------------------------------------> <html> <head>
+ 
+    <link rel="stylesheet" type = "text/css"  href="stylesheet.css"/>  
+ <script type="text/javascript" src="script.js"></script></head> <body> <h4>NoSqlDb.cpp<br> Dependent files : 
+<h4> <a href = "NoSqlDb.h.html">NoSqlDb.h </a> </h4>
+<h4> <a href = "GrammarHelpers.cpp.html">GrammarHelpers.cpp </a> </h4>
+<PRE>
+
+/////////////////////////////////////////////////////////////////////
+// NoSqlDb.cpp - key/value pair in-memory database                 //
+// ver 1.2                                                         //
+// Jim Fawcett, CSE687 - Object Oriented Design, Spring 2017       //
+/////////////////////////////////////////////////////////////////////
+#include "../NoSqlDb/NoSqlDb.h"
+#include &lt;iostream&gt;
+
+#ifdef TEST_NOSQLDB
+
+using namespace NoSQLDB;
+using StrData = std::string;
+using intData = int;
+
+int main()
+{<button id ="10000"onclick="myFunction0();toggleText0(this.id);">-</button><div id="0">
+  std::cout &lt;&lt; "\n  Demonstrating NoSql Helper Code";
+  std::cout &lt;&lt; "\n =================================\n";
+
+  std::cout &lt;&lt; "\n  Creating and saving NoSqlDb elements with string data";
+  std::cout &lt;&lt; "\n -------------------------------------------------------\n";
+
+  NoSqlDb&lt;StrData&gt; db;
+
+  Element&lt;StrData&gt; elem1;
+  elem1.name = "elem1";
+  elem1.category = "test";
+  elem1.data = "elem1's StrData";
+
+  db.saveRecord(elem1.name, elem1);
+
+  Element&lt;StrData&gt; elem2;
+  elem2.name = "elem2";
+  elem2.category = "test";
+  elem2.data = "elem2's StrData";
+
+  db.saveRecord(elem2.name, elem2);
+
+  Element&lt;StrData&gt; elem3;
+  elem3.name = "elem3";
+  elem3.category = "test";
+  elem3.data = "elem3's StrData";
+
+  db.saveRecord(elem3.name, elem3);
+
+  elem1.saveChild(elem2.name);
+  elem1.saveChild(elem3.name);
+  elem2.saveChild(elem3.name);
+  db.saveValue(elem1.name, elem1);
+  db.saveValue(elem2.name, elem2);
+
+  std::cout &lt;&lt; "\n  Retrieving elements from NoSqlDb&lt;string&gt;";
+  std::cout &lt;&lt; "\n ------------------------------------------\n";
+
+  std::cout &lt;&lt; "\n  size of db = " &lt;&lt; db.count() &lt;&lt; "\n";
+  Keys keys = db.keys();
+  for (Key key : keys)
+  {
+    std::cout &lt;&lt; "\n  " &lt;&lt; key &lt;&lt; ":";
+    std::cout &lt;&lt; db.value(key).show();
+  }
+
+  std::cout &lt;&lt; "\n  Erasing element with key elem2";
+  if (db.removeRecord("elem2"))
+    std::cout &lt;&lt; "\n  removed record and all children references to this record";
+  std::cout &lt;&lt; "\n  size of db = " &lt;&lt; db.count() &lt;&lt; "\n";
+  keys = db.keys();
+  for (Key key : keys)
+  {
+    std::cout &lt;&lt; "\n  " &lt;&lt; key &lt;&lt; ":";
+    std::cout &lt;&lt; db.value(key).show();
+  }
+
+
+  std::cout &lt;&lt; "\n\n";
+
+  std::cout &lt;&lt; "\n  Creating and saving NoSqlDb elements with int data";
+  std::cout &lt;&lt; "\n ----------------------------------------------------\n";
+
+  NoSqlDb&lt;intData&gt; idb;
+
+  Element&lt;intData&gt; ielem1;
+  ielem1.name = "elem1";
+  ielem1.category = "test";
+  ielem1.data = 1;
+
+  idb.saveRecord(ielem1.name, ielem1);
+
+  Element&lt;intData&gt; ielem2;
+  ielem2.name = "elem2";
+  ielem2.category = "test";
+  ielem2.data = 2;
+
+  idb.saveRecord(ielem2.name, ielem2);
+
+  Element&lt;intData&gt; ielem3;
+  ielem3.name = "elem3";
+  ielem3.category = "test";
+  ielem3.data = 3;
+
+  idb.saveRecord(ielem3.name, ielem3);
+
+  Element&lt;intData&gt; ielem4;
+  ielem3.name = "elem4";
+  ielem3.category = "test";
+  ielem3.data = 4;
+
+  idb.saveRecord(ielem3.name, ielem3);
+
+  std::cout &lt;&lt; "\n  Retrieving elements from NoSqlDb&lt;int&gt;";
+  std::cout &lt;&lt; "\n ---------------------------------------\n";
+
+  std::cout &lt;&lt; "\n  size of idb = " &lt;&lt; idb.count() &lt;&lt; "\n";
+  Keys ikeys = idb.keys();
+  for (Key key : ikeys)
+  {
+    std::cout &lt;&lt; "\n  " &lt;&lt; key &lt;&lt; ":";
+    std::cout &lt;&lt; idb.value(key).show();
+  }
+  std::cout &lt;&lt; "\n\n";
+</div>}}
+#endif</PRE> </body> </html>

@@ -1,0 +1,97 @@
+<!----------------------------------------------------------------------------../PublishedFiles/UnitTest.h.html - output HTML file for Project #3 Published 5 April 2017 Madhusudhan.B.R, CSE687 - Object Oriented Design, Spring 2017-----------------------------------------------------------------------------> <html> <head>
+ 
+    <link rel="stylesheet" type = "text/css"  href="stylesheet.css"/>  
+ <script type="text/javascript" src="script.js"></script></head> <body> <h4>UnitTest.h<br> Dependent files : 
+<h4> <a href = "Convert.cpp.html">Convert.cpp </a> </h4>
+<h4> <a href = "Utilities.cpp.html">Utilities.cpp </a> </h4>
+<h4> <a href = "FileSystem.cpp.html">FileSystem.cpp </a> </h4>
+<h4> <a href = "XmlElement.cpp.html">XmlElement.cpp </a> </h4>
+<h4> <a href = "CopyOfUnitTest.h.html">CopyOfUnitTest.h </a> </h4>
+<h4> <a href = "UnitTest.h.html">UnitTest.h </a> </h4>
+<h4> <a href = "Cpp11-BlockingQueue.cpp.html">Cpp11-BlockingQueue.cpp </a> </h4>
+<h4> <a href = "FileSystemTest.cpp.html">FileSystemTest.cpp </a> </h4>
+<h4> <a href = "GrammarHelpers.cpp.html">GrammarHelpers.cpp </a> </h4>
+<h4> <a href = "Utilities.h.html">Utilities.h </a> </h4>
+<PRE>
+
+#ifndef UNITTEST_H
+#define UNITTEST_H
+///////////////////////////////////////////////////////////////
+// UnitTest.cpp - Demonstrate unit testing framework         //
+// ver 1.1                                                   //
+// --------------------------------------------------------- //
+// copyright © Jim Fawcett, 2012, 2013                       //
+// All rights granted provided that this notice is retained  //
+// --------------------------------------------------------- //
+// Jim Fawcett, CSE687-Object Oriented Design, Spring 2013   //
+///////////////////////////////////////////////////////////////
+
+#include &lt;string&gt;
+#include &lt;iostream&gt;
+
+namespace Test
+{
+  void Title(const std::string& title, char ch='=')
+  {<button id ="10000"onclick="myFunction0();toggleText0(this.id);">-</button><div id="0">
+    std::cout &lt;&lt; "\n  " &lt;&lt; title;
+    std::cout &lt;&lt; "\n " &lt;&lt; std::string(title.size() + 2, ch);
+  </div>}}
+
+  template &lt;typename T&gt;
+  class TestBase
+  {<button id ="10001"onclick="myFunction1();toggleText1(this.id);">-</button><div id="1">
+  public:
+
+    typedef bool (T::*Test) ();
+
+    virtual ~TestBase() {}
+
+    // Your test driver implements this for each major test
+    // - call a sequence of doTest(TestN)s
+    //-----------------------------------------------------
+    virtual bool test()=0;
+
+    // Executes test functions inside a try block
+    //-------------------------------------------
+    bool doTest(Test atest) 
+    { 
+      try
+      {
+        return (dynamic_cast&lt;T*&gt;(this)-&gt;*atest)();
+      }
+      catch (std::exception& ex)
+      {
+        std::cout &lt;&lt; "\n  failed: " &lt;&lt; ex.what();
+        return false;
+      }
+      catch(...)
+      {
+        std::cout &lt;&lt; "\n  failed: thrown structured exception";
+        return false;
+      }
+    </div>}}
+    // Call this in your test functions to save duplicating output statements
+    //-----------------------------------------------------------------------
+    bool checkResult(bool predicate, std::string testname)
+    {<button id ="10002"onclick="myFunction2();toggleText2(this.id);">-</button><div id="2">
+      std::string name = std::string(typeid(*this).name()) + "::" + testname;
+      name = name.substr(6, name.size() - 6);
+      if(predicate)
+        return passed(name);
+      else
+        return failed(name);
+    </div>}}
+  protected:
+    bool passed(const std::string& name)
+    {<button id ="10003"onclick="myFunction3();toggleText3(this.id);">-</button><div id="3">
+      std::cout &lt;&lt; "\n  passed: " &lt;&lt; name;
+      return true;
+    </div>}}
+    bool failed(const std::string& name)
+    {<button id ="10004"onclick="myFunction4();toggleText4(this.id);">-</button><div id="4">
+      std::cout &lt;&lt; "\n  failed: " &lt;&lt; name;
+      return false;
+    </div>}}
+  </div>}};
+}
+#endif</PRE> </body> </html>

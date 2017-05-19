@@ -1,0 +1,96 @@
+<!----------------------------------------------------------------------------../PublishedFiles/Convert.cpp.html - output HTML file for Project #3 Published 5 April 2017 Madhusudhan.B.R, CSE687 - Object Oriented Design, Spring 2017-----------------------------------------------------------------------------> <html> <head>
+ 
+    <link rel="stylesheet" type = "text/css"  href="stylesheet.css"/>  
+ <script type="text/javascript" src="script.js"></script></head> <body> <h4>Convert.cpp<br> Dependent files : 
+<h4> <a href = "Convert.cpp.html">Convert.cpp </a> </h4>
+<h4> <a href = "Tokenizer.h.html">Tokenizer.h </a> </h4>
+<h4> <a href = "Utilities.cpp.html">Utilities.cpp </a> </h4>
+<h4> <a href = "FileSystem.cpp.html">FileSystem.cpp </a> </h4>
+<h4> <a href = "XmlElement.cpp.html">XmlElement.cpp </a> </h4>
+<h4> <a href = "Convert.h.html">Convert.h </a> </h4>
+<h4> <a href = "Test1.cpp.html">Test1.cpp </a> </h4>
+<h4> <a href = "Test1.cpp.html">Test1.cpp </a> </h4>
+<PRE>
+
+/////////////////////////////////////////////////////////////////////
+// TemplatesIntro.cpp - Demonstrate Template Syntax                //
+//                                                                 //
+// Jim Fawcett, CSE687 - Object Oriented Design, Spring 2017       //
+/////////////////////////////////////////////////////////////////////
+
+#include "Convert.h"
+#include &lt;string&gt;
+#include &lt;iostream&gt;
+#include &lt;functional&gt;
+
+/////////////////////////////////////////////////////////////////////
+// Widget class - shows user defined types can be template arguments
+
+class Widget
+{<button id ="10000"onclick="myFunction0();toggleText0(this.id);">-</button><div id="0">
+public:
+  Widget(const std::string& str = "") : state(str) {}
+  std::string& value() { return state; }
+private:
+  std::string state;
+</div>}};
+
+std::ostream& operator&lt;&lt;(std::ostream& out, Widget& widget)
+{<button id ="10001"onclick="myFunction1();toggleText1(this.id);">-</button><div id="1">
+  out &lt;&lt; widget.value();
+  return out;
+</div>}}
+
+std::istream& operator &gt;&gt; (std::istream& in, Widget& widget)
+{<button id ="10002"onclick="myFunction2();toggleText2(this.id);">-</button><div id="2">
+  std::string temp;
+  while (in.good())  // extract all the words from widget's string state
+  {
+    in &gt;&gt; temp;
+    widget.value() += temp + " ";
+  }
+  return in;
+</div>}}
+
+/////////////////////////////////////////////////////////////////////
+// lambdas that provide mildly useful local processing
+
+std::function&lt;void()&gt; putLine = []() { std::wcout &lt;&lt; "\n"; };
+
+std::function&lt;void(size_t)&gt; putLines = [](size_t n) {<button id ="10003"onclick="myFunction3();toggleText3(this.id);">-</button><div id="3">
+  for (size_t i = 0; i &lt; n; ++i)
+    putLine();
+};
+
+std::function&lt;void(const std::string&, char)&gt; titleCore = [](const std::string& msg, char underline='-') {<button id ="10004"onclick="myFunction4();toggleText4(this.id);">-</button><div id="4">
+  std::cout &lt;&lt; "\n  " &lt;&lt; msg.c_str();
+  std::wcout &lt;&lt; "\n " &lt;&lt; std::string(msg.size() + 2, underline).c_str();
+};
+
+std::function&lt;void(const std::string&)&gt; Title = [](const std::string& msg) { titleCore(msg, '='); };
+
+std::function&lt;void(const std::string&)&gt; title = [](const std::string& msg) { titleCore(msg, '-'); };
+
+/////////////////////////////////////////////////////////////////////
+// Demo code
+
+int main()
+{<button id ="10005"onclick="myFunction5();toggleText5(this.id);">-</button><div id="5">
+  Title("Demonstrating Templates");
+  putLine();
+
+  title("Demonstrating Conversion of numerical types");
+  std::cout &lt;&lt; "\n  conversion of integer: " &lt;&lt; Convert&lt;int&gt;::toString(42);
+  std::cout &lt;&lt; "\n  conversion of double:  " &lt;&lt; Convert&lt;double&gt;::toString(3.1415927);
+  putLine();
+
+  title("Demonstrating Conversion of Widget type");
+  Widget widget("Joe Widget");
+  std::string widgetStore = Convert&lt;Widget&gt;::toString(widget);
+  std::cout &lt;&lt; "\n  conversion of Widget: " &lt;&lt; widgetStore;
+
+  Widget newWidget = Convert&lt;Widget&gt;::fromString(widgetStore);
+  std::cout &lt;&lt; "\n  newWidget state = " &lt;&lt; newWidget.value();
+
+  putLines(2);
+}</PRE> </body> </html>

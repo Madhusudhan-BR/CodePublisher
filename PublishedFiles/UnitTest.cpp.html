@@ -1,0 +1,86 @@
+<!----------------------------------------------------------------------------../PublishedFiles/UnitTest.cpp.html - output HTML file for Project #3 Published 5 April 2017 Madhusudhan.B.R, CSE687 - Object Oriented Design, Spring 2017-----------------------------------------------------------------------------> <html> <head>
+ 
+    <link rel="stylesheet" type = "text/css"  href="stylesheet.css"/>  
+ <script type="text/javascript" src="script.js"></script></head> <body> <h4>UnitTest.cpp<br> Dependent files : 
+<h4> <a href = "UnitTest.cpp.html">UnitTest.cpp </a> </h4>
+<h4> <a href = "CopyOfUnitTest.h.html">CopyOfUnitTest.h </a> </h4>
+<h4> <a href = "UnitTest.h.html">UnitTest.h </a> </h4>
+<h4> <a href = "Cpp11-BlockingQueue.cpp.html">Cpp11-BlockingQueue.cpp </a> </h4>
+<h4> <a href = "FileSystemTest.cpp.html">FileSystemTest.cpp </a> </h4>
+<h4> <a href = "GrammarHelpers.cpp.html">GrammarHelpers.cpp </a> </h4>
+<h4> <a href = "Utilities.h.html">Utilities.h </a> </h4>
+<PRE>
+
+///////////////////////////////////////////////////////////////
+// UnitTest.cpp - Demonstrate unit testing framework         //
+// ver 1.1                                                   //
+// --------------------------------------------------------- //
+// copyright © Jim Fawcett, 2012, 2013                       //
+// All rights granted provided that this notice is retained  //
+// --------------------------------------------------------- //
+// Jim Fawcett, CSE687-Object Oriented Design, Spring 2013   //
+///////////////////////////////////////////////////////////////
+/*
+ * This is what a test class should look like:
+ */
+#include "UnitTest.h"
+#include &lt;string&gt;
+#include &lt;iostream&gt;
+using namespace Test;
+
+ class TestStdStringClass : public TestBase&lt;TestStdStringClass&gt;
+ {<button id ="10000"onclick="myFunction0();toggleText0(this.id);">-</button><div id="0">
+ public:
+   bool TestConstruction()
+   {<button id ="10001"onclick="myFunction1();toggleText1(this.id);">-</button><div id="1">
+     bool t1, t2;
+     std::string s1("this is a string");
+     t1 = (s1 == "this is a string");
+     std::string s2;
+     t2 = (s2.size() == 0);
+     return checkResult(t1 && t2, "TestConstruction");
+   </div>}}
+   bool TestCopy()
+   {<button id ="10002"onclick="myFunction2();toggleText2(this.id);">-</button><div id="2">
+     bool t1;
+     std::string orig = "a string";
+     std::string copy = orig;
+     t1 = (copy == orig && &copy != &orig);
+     return checkResult(t1, "TestCopy");
+   </div>}}
+   bool TestWillThrowStdException()
+   {<button id ="10003"onclick="myFunction3();toggleText3(this.id);">-</button><div id="3">
+     throw std::exception("TestWillThrowStdException");
+     return true;
+   </div>}}
+   bool TestWillThrowStructuredException()
+   {<button id ="10004"onclick="myFunction4();toggleText4(this.id);">-</button><div id="4">
+     int x=1, y=0;
+     x = x/y;
+     return true;
+   </div>}}
+   bool test()  // overriding inherited test method
+   {<button id ="10005"onclick="myFunction5();toggleText5(this.id);">-</button><div id="5">
+     bool t1, t2, t3, t4;
+     t1 = doTest(&TestStdStringClass::TestConstruction);
+     t2 = doTest(&TestStdStringClass::TestCopy);
+     t3 = doTest(&TestStdStringClass::TestWillThrowStdException);
+     t4 = doTest(&TestStdStringClass::TestWillThrowStructuredException);
+     return t1 && t2 && !t3 && !t4;
+   </div>}}
+ private:
+   // save here data needed in more than one test 
+ </div>}};
+#ifdef TEST_UNITTEST
+int main()
+{<button id ="10006"onclick="myFunction6();toggleText6(this.id);">-</button><div id="6">
+  Title("Demonstrating UnitTest Package");
+
+  TestStdStringClass test;
+  if(test.test())
+    std::cout &lt;&lt; "\n  all tests passed";
+  else
+    std::cout &lt;&lt; "\n  one or more tests failed";
+  std::cout &lt;&lt; "\n\n";
+</div>}}
+#endif</PRE> </body> </html>

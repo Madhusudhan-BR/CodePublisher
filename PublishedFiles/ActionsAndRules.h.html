@@ -1,0 +1,1356 @@
+<!----------------------------------------------------------------------------../PublishedFiles/ActionsAndRules.h.html - output HTML file for Project #3 Published 5 April 2017 Madhusudhan.B.R, CSE687 - Object Oriented Design, Spring 2017-----------------------------------------------------------------------------> <html> <head>
+ 
+    <link rel="stylesheet" type = "text/css"  href="stylesheet.css"/>  
+ <script type="text/javascript" src="script.js"></script></head> <body> <h4>ActionsAndRules.h<br> Dependent files : 
+<h4> <a href = "ActionsAndRules.h.html">ActionsAndRules.h </a> </h4>
+<h4> <a href = "Logger.h.html">Logger.h </a> </h4>
+<h4> <a href = "FileSystem.h.html">FileSystem.h </a> </h4>
+<h4> <a href = "ScopeStack.h.html">ScopeStack.h </a> </h4>
+<h4> <a href = "AbstrSynTree.h.html">AbstrSynTree.h </a> </h4>
+<h4> <a href = "Tokenizer.h.html">Tokenizer.h </a> </h4>
+<h4> <a href = "Tokenizer.h.html">Tokenizer.h </a> </h4>
+<h4> <a href = "Parser.h.html">Parser.h </a> </h4>
+<h4> <a href = "itokcollection.h.html">itokcollection.h </a> </h4>
+<h4> <a href = "itokcollection.h.html">itokcollection.h </a> </h4>
+<h4> <a href = "GrammarHelpers.h.html">GrammarHelpers.h </a> </h4>
+<h4> <a href = "Convert.cpp.html">Convert.cpp </a> </h4>
+<h4> <a href = "Utilities.cpp.html">Utilities.cpp </a> </h4>
+<h4> <a href = "GrammarHelpers.cpp.html">GrammarHelpers.cpp </a> </h4>
+<h4> <a href = "SemiExp.h.html">SemiExp.h </a> </h4>
+<PRE>
+
+#ifndef ACTIONSANDRULES_H
+#define ACTIONSANDRULES_H
+/////////////////////////////////////////////////////////////////////
+//  ActionsAndRules.h - declares new parsing rules and actions     //
+//  ver 3.3                                                        //
+//  Language:      Visual C++ 2008, SP1                            //
+//  Platform:      Dell Precision T7400, Vista Ultimate SP1        //
+//  Application:   Prototype for CSE687 Pr1, Sp09                  //
+//  Author:        Jim Fawcett, CST 4-187, Syracuse University     //
+//                 (315) 443-3948, jfawcett@twcny.rr.com           //
+/////////////////////////////////////////////////////////////////////
+/*
+  Module Operations: 
+  ==================
+  This module defines several action classes.  Its classes provide 
+  specialized services needed for specific applications.  The modules
+  Parser, SemiExpression, and Tokenizer, are intended to be reusable
+  without change.  This module provides a place to put extensions of
+  these facilities and is not expected to be reusable. 
+
+  Public Interface:
+  =================
+  Toker t(someFile);              // create tokenizer instance
+  SemiExp se(&t);                 // create a SemiExp attached to tokenizer
+  Parser parser(se);              // now we have a parser
+  Rule1 r1;                       // create instance of a derived Rule class
+  Action1 a1;                     // create a derived action
+  r1.addAction(&a1);              // register action with the rule
+  parser.addRule(&r1);            // register rule with parser
+  while(se.getSemiExp())          // get semi-expression
+    parser.parse();               //   and parse it
+
+  Build Process:
+  ==============
+  Required files
+    - Parser.h, Parser.cpp, ScopeStack.h, ScopeStack.cpp,
+      ActionsAndRules.h, ActionsAndRules.cpp, ConfigureParser.cpp,
+      ItokCollection.h, SemiExpression.h, SemiExpression.cpp, tokenizer.h, tokenizer.cpp
+  Build commands (either one)
+    - devenv CodeAnalysis.sln
+    - cl /EHsc /DTEST_PARSER parser.cpp ActionsAndRules.cpp \
+         semiexpression.cpp tokenizer.cpp /link setargv.obj
+
+  Maintenance History:
+  ====================
+  ver 3.3 : 26 Feb 2017
+  - Fixed bug in public data analysis with changes to rule CppDeclaration
+    and its action HandleCppDeclaration.
+  - Fixed a minor bug in name collection for operators.  Won't be important
+    for dependency analysis.
+  ver 3.2 : 28 Aug 16
+  - fixed errors in many rules and actions based on lots of testing
+  - cleaned up text, removing comments and improving prologues
+  ver 3.1 : 23 Aug 16
+  - qualified input pointers in rules and actions as const
+  - cleaned up code by removing unreachables and commented code, and by simplifying 
+  ver 3.0 : 06 Aug 16
+  - Added use of AbstrSynTree
+  - Added new rules and actions
+  - Renamed and modified most of the other actions and rules
+  ver 2.1 : 15 Feb 16
+  - small functional change to a few of the actions changes display strategy
+  - preface the (new) Toker and SemiExp with Scanner namespace
+  ver 2.0 : 01 Jun 11
+  - added processing on way to building strong code analyzer
+  ver 1.1 : 17 Jan 09
+  - changed to accept a pointer to interfaced ITokCollection instead
+    of a SemiExpression
+  ver 1.0 : 12 Jan 06
+  - first release
+
+  Planned Changes:
+  ================
+  C++ lambda detection needs strengthening
+*/
+//
+#include &lt;queue&gt;
+#include &lt;string&gt;
+#include &lt;sstream&gt;
+#include &lt;iomanip&gt;
+#include "Parser.h"
+#include "../GrammarHelpers/GrammarHelpers.h"
+#include "../SemiExp/itokcollection.h"
+#include "../ScopeStack/ScopeStack.h"
+#include "../Tokenizer/Tokenizer.h"
+#include "../SemiExp/SemiExp.h"
+#include "../AbstractSyntaxTree/AbstrSynTree.h"
+#include "../Logger/Logger.h"
+#include "../FileSystem/FileSystem.h"
+
+namespace CodeAnalysis
+{  
+  ///////////////////////////////////////////////////////////////////
+  // Repository instance is used to share resources
+  // among all actions.
+
+  enum Language { C /* not implemented */, Cpp, CSharp };
+
+  class Repository  // application specific
+  {<button id ="10000"onclick="myFunction0();toggleText0(this.id);">-</button><div id="0">
+  public:
+    using Rslt = Logging::StaticLogger&lt;0&gt;;  // use for application results
+    using Demo = Logging::StaticLogger&lt;1&gt;;  // use for demonstrations of processing
+    using Dbug = Logging::StaticLogger&lt;2&gt;;  // use for debug output
+    using Package = std::string;
+    using Path = std::string;
+
+  private:
+    Language language_ = Language::Cpp;
+    Path path_;
+    ScopeStack&lt;ASTNode*&gt; stack;
+    AbstrSynTree ast;
+    ASTNode* pGlobalScope;
+    Package package_;
+    Scanner::Toker* p_Toker;
+    Access currentAccess_ = Access::publ;
+    static Repository* instance;
+  
+  public:
+    
+    Repository(Scanner::Toker* pToker) : ast(stack)
+    {<button id ="10001"onclick="myFunction1();toggleText1(this.id);">-</button><div id="1">
+      p_Toker = pToker;
+      pGlobalScope = stack.top();
+      instance = this;
+    </div>}}
+
+    ~Repository()
+    {<button id ="10002"onclick="myFunction2();toggleText2(this.id);">-</button><div id="2">
+      Dbug::write("\n  deleting repository");
+    </div>}}
+
+    Language& language() { return language_; }
+
+    Package& package() { return package_; }
+
+    Path& currentPath() { return path_; }
+
+    Access& currentAccess() { return currentAccess_; }
+
+    static Repository* getInstance() { return instance; }
+
+    ScopeStack&lt;ASTNode*&gt;& scopeStack() { return stack; }
+
+    AbstrSynTree& AST() { return ast; }
+
+    ASTNode* getGlobalScope() { return pGlobalScope; }
+
+    Scanner::Toker* Toker() { return p_Toker; }
+
+    size_t lineCount() 
+    { 
+      return (size_t)(p_Toker-&gt;currentLineCount()); 
+    </div>}}
+  </div>}};
+
+  ///////////////////////////////////////////////////////////////
+  // rule to detect beginning of scope
+
+  class BeginScope : public IRule
+  {<button id ="10003"onclick="myFunction3();toggleText3(this.id);">-</button><div id="3">
+  public:
+    bool doTest(const Scanner::ITokCollection* pTc) override
+    {<button id ="10004"onclick="myFunction4();toggleText4(this.id);">-</button><div id="4">
+      GrammarHelper::showParseDemo("Test begin scope", *pTc);
+
+      // don't parse SemiExp with single semicolon token
+
+      if (pTc-&gt;length() == 1 && (*pTc)[0] == ";")
+        return IRule::Stop;
+
+      if (pTc-&gt;find("{") &lt; pTc-&gt;length())
+      {
+        doActions(pTc);
+      }
+      return IRule::Continue;
+    </div>}}
+  </div>}};
+
+  ///////////////////////////////////////////////////////////////
+  // action to handle scope stack at beginning of scope
+
+  class HandleBeginScope : public IAction
+  {<button id ="10005"onclick="myFunction5();toggleText5(this.id);">-</button><div id="5">
+    Repository* p_Repos;
+  public:
+    HandleBeginScope(Repository* pRepos)
+    {<button id ="10006"onclick="myFunction6();toggleText6(this.id);">-</button><div id="6">
+      p_Repos = pRepos;
+    </div>}}
+    void doAction(const Scanner::ITokCollection* pTc) override
+    {<button id ="10007"onclick="myFunction7();toggleText7(this.id);">-</button><div id="7">
+      GrammarHelper::showParseDemo("handle begin scope", *pTc);
+      //if (p_Repos-&gt;scopeStack().size() == 0)
+      //  Repository::Demo::write("\n--- empty stack ---");
+
+      ASTNode* pElem = new ASTNode;
+      pElem-&gt;type_ = "anonymous";
+      pElem-&gt;name_ = "none";
+      pElem-&gt;package_ = p_Repos-&gt;package();
+      pElem-&gt;startLineCount_ = p_Repos-&gt;lineCount();
+      pElem-&gt;endLineCount_ = 1;
+      pElem-&gt;path_ = p_Repos-&gt;currentPath();
+      /*
+       * make this ASTNode child of ASTNode on stack top
+       * then push onto stack
+       */
+      p_Repos-&gt;AST().add(pElem);
+    </div>}}
+  </div>}};
+
+  ///////////////////////////////////////////////////////////////
+  // rule to detect end of scope
+
+  class EndScope : public IRule
+  {<button id ="10008"onclick="myFunction8();toggleText8(this.id);">-</button><div id="8">
+  public:
+    bool doTest(const Scanner::ITokCollection* pTc) override
+    {<button id ="10009"onclick="myFunction9();toggleText9(this.id);">-</button><div id="9">
+      GrammarHelper::showParseDemo("Test end scope", *pTc);
+
+      //std::string debug = pTc-&gt;show();
+
+      if (pTc-&gt;find("}") &lt; pTc-&gt;length())
+      {
+        doActions(pTc);
+        return IRule::Stop;
+      }
+      return IRule::Continue;
+    </div>}}
+  </div>}};
+
+  ///////////////////////////////////////////////////////////////
+  // action to handle scope stack at end of scope
+
+  class HandleEndScope : public IAction
+  {<button id ="10010"onclick="myFunction10();toggleText10(this.id);">-</button><div id="10">
+    Repository* p_Repos;
+  public:
+    using Dbug = Logging::StaticLogger&lt;2&gt;;
+
+    HandleEndScope(Repository* pRepos)
+    {<button id ="10011"onclick="myFunction11();toggleText11(this.id);">-</button><div id="11">
+      p_Repos = pRepos;
+    </div>}}
+    void doAction(const Scanner::ITokCollection* pTc) override
+    {<button id ="10012"onclick="myFunction12();toggleText12(this.id);">-</button><div id="12">
+      GrammarHelper::showParseDemo("Handle end scope", *pTc);
+
+      //if (p_Repos-&gt;scopeStack().size() == 0)
+      //{
+      //  Repository::Demo::flush();
+      //  Repository::Demo::write("\n--- empty stack ---");
+      //}
+      //ASTNode* pDebug = p_Repos-&gt;scopeStack().top();
+      //std::string debug1 = pDebug-&gt;name_;
+      //std::string debug2 = pDebug-&gt;type_;
+      //std::string debug3 = pDebug-&gt;package_;
+      //std::string debug = pElem-&gt;name_;
+
+      if (p_Repos-&gt;scopeStack().size() == 0)
+        return;
+
+      ASTNode* pElem = p_Repos-&gt;AST().pop();
+
+      pElem-&gt;endLineCount_ = p_Repos-&gt;lineCount();
+      if (pElem-&gt;type_ == "class" || pElem-&gt;type_ == "struct")
+        (pElem-&gt;endLineCount_)++;
+
+      p_Repos-&gt;currentAccess() = Access::priv;
+    </div>}}
+  </div>}};
+
+  ///////////////////////////////////////////////////////////////
+  // rule to detect access for C++
+
+  class DetectAccessSpecifier : public IRule
+  {<button id ="10013"onclick="myFunction13();toggleText13(this.id);">-</button><div id="13">
+  public:
+    bool doTest(const Scanner::ITokCollection* pTc) override
+    {<button id ="10014"onclick="myFunction14();toggleText14(this.id);">-</button><div id="14">
+      GrammarHelper::showParseDemo("Test access spec", *pTc);
+
+      Repository* pRepo = Repository::getInstance();
+      if (pRepo-&gt;language() != Language::Cpp)
+        return IRule::Continue;
+
+      size_t pos = pTc-&gt;find(":");
+      if (0 &lt; pos && pos &lt; pTc-&gt;length())
+      {
+        const std::string tok = (*pTc)[pos - 1];
+        if (tok == "public" || tok == "protected" || tok == "private")
+        {
+          doActions(pTc);
+          return IRule::Stop;
+        }
+      }
+      return IRule::Continue;
+    </div>}}
+  </div>}};
+
+  ///////////////////////////////////////////////////////////////
+  // action to handle access specifier
+
+  class HandleAccessSpecifier : public IAction
+  {<button id ="10015"onclick="myFunction15();toggleText15(this.id);">-</button><div id="15">
+    Repository* p_Repos;
+
+  public:
+    HandleAccessSpecifier(Repository* pRepos)
+    {<button id ="10016"onclick="myFunction16();toggleText16(this.id);">-</button><div id="16">
+      p_Repos = pRepos;
+    </div>}}
+    void doAction(const Scanner::ITokCollection* pTc) override
+    {<button id ="10017"onclick="myFunction17();toggleText17(this.id);">-</button><div id="17">
+      GrammarHelper::showParseDemo("Handle access spec: ", *pTc);
+
+      std::string tok = (*pTc)[pTc-&gt;length() - 2];
+      Access& access = p_Repos-&gt;currentAccess();
+      if (tok == "public")
+        access = Access::publ;
+      else if (tok == "protected")
+        access = Access::prot;
+      else
+        access = Access::priv;
+    </div>}}
+  </div>}};
+
+  ///////////////////////////////////////////////////////////////
+  // rule to detect preprocessor statements
+
+  class PreprocStatement : public IRule
+  {<button id ="10018"onclick="myFunction18();toggleText18(this.id);">-</button><div id="18">
+  public:
+    bool doTest(const Scanner::ITokCollection* pTc) override
+    {<button id ="10019"onclick="myFunction19();toggleText19(this.id);">-</button><div id="19">
+      GrammarHelper::showParseDemo("Test preproc statement: ", *pTc);
+
+      //std::string debug = pTc-&gt;show();
+
+      if (pTc-&gt;find("#") &lt; pTc-&gt;length())
+      {
+        doActions(pTc);
+        return IRule::Stop;
+      }
+      return IRule::Continue;
+    </div>}}
+  </div>}};
+
+  ///////////////////////////////////////////////////////////////
+  // action to add semiexp to scope stack top statements_
+
+  class HandlePreprocStatement : public IAction
+  {<button id ="10020"onclick="myFunction20();toggleText20(this.id);">-</button><div id="20">
+    Repository* p_Repos;
+
+  public:
+    HandlePreprocStatement(Repository* pRepos)
+    {<button id ="10021"onclick="myFunction21();toggleText21(this.id);">-</button><div id="21">
+      p_Repos = pRepos;
+    </div>}}
+    void doAction(const Scanner::ITokCollection* pTc) override
+    {<button id ="10022"onclick="myFunction22();toggleText22(this.id);">-</button><div id="22">
+      GrammarHelper::showParseDemo("Handle preproc statement: ", *pTc);
+
+      Scanner::ITokCollection* pClone = pTc-&gt;clone();
+      ASTNode* pElem = p_Repos-&gt;scopeStack().top();
+      pElem-&gt;statements_.push_back(pClone);
+
+      GrammarHelper::showParse("Preproc Stmt", *pTc);
+    </div>}}
+  </div>}};
+
+  ///////////////////////////////////////////////////////////////
+  // rule to detect namespace statements
+
+  class NamespaceDefinition : public IRule
+  {<button id ="10023"onclick="myFunction23();toggleText23(this.id);">-</button><div id="23">
+  public:
+    bool doTest(const Scanner::ITokCollection* pTc) override
+    {<button id ="10024"onclick="myFunction24();toggleText24(this.id);">-</button><div id="24">
+      GrammarHelper::showParseDemo("Test namespace definition: ", *pTc);
+
+      const Scanner::ITokCollection& tc = *pTc;
+      if (tc[tc.length() - 1] == "{")
+      {
+        size_t len = tc.find("namespace");
+        if (len &lt; tc.length())
+        {
+          doActions(pTc);
+          return IRule::Stop;
+        }
+      }
+      return IRule::Continue;
+    </div>}}
+  </div>}};
+
+  ///////////////////////////////////////////////////////////////
+  // action to add namespace info to scope stack top
+
+  class HandleNamespaceDefinition : public IAction
+  {<button id ="10025"onclick="myFunction25();toggleText25(this.id);">-</button><div id="25">
+    Repository* p_Repos;
+
+  public:
+    HandleNamespaceDefinition(Repository* pRepos)
+    {<button id ="10026"onclick="myFunction26();toggleText26(this.id);">-</button><div id="26">
+      p_Repos = pRepos;
+    </div>}}
+    void doAction(const Scanner::ITokCollection* pTc) override
+    {<button id ="10027"onclick="myFunction27();toggleText27(this.id);">-</button><div id="27">
+      GrammarHelper::showParseDemo("Handle namespace definition: ", *pTc);
+
+      ASTNode* top = p_Repos-&gt;scopeStack().top();
+
+      std::string name = (*pTc)[pTc-&gt;find("namespace") + 1];
+      top-&gt;type_ = "namespace";
+      top-&gt;name_ = name;
+      top-&gt;package_ = p_Repos-&gt;package();
+
+      GrammarHelper::showParse("namespace def", *pTc);
+    </div>}}
+  </div>}};
+
+  ///////////////////////////////////////////////////////////////
+  // rule to detect class statements
+
+  class ClassDefinition : public IRule
+  {<button id ="10028"onclick="myFunction28();toggleText28(this.id);">-</button><div id="28">
+  public:
+    bool doTest(const Scanner::ITokCollection* pTc) override
+    {<button id ="10029"onclick="myFunction29();toggleText29(this.id);">-</button><div id="29">
+      GrammarHelper::showParseDemo("Test class definition: ", *pTc);
+
+      const Scanner::ITokCollection& tc = *pTc;
+      if (tc[tc.length() - 1] == "{")
+      {
+        size_t len = tc.find("class");
+        if (len &lt; tc.length())
+        {
+          doActions(pTc);
+          return IRule::Stop;
+        }
+        len = tc.find("interface");
+        if (len &lt; tc.length())
+        {
+          doActions(pTc);
+          return IRule::Stop;
+        }
+      }
+      return IRule::Continue;
+    </div>}}
+  </div>}};
+
+  ///////////////////////////////////////////////////////////////
+  // action to add class info to scope stack top
+
+  class HandleClassDefinition : public IAction
+  {<button id ="10030"onclick="myFunction30();toggleText30(this.id);">-</button><div id="30">
+    Repository* p_Repos;
+
+  public:
+    HandleClassDefinition(Repository* pRepos)
+    {<button id ="10031"onclick="myFunction31();toggleText31(this.id);">-</button><div id="31">
+      p_Repos = pRepos;
+    </div>}}
+    void doAction(const Scanner::ITokCollection* pTc) override
+    {<button id ="10032"onclick="myFunction32();toggleText32(this.id);">-</button><div id="32">
+      GrammarHelper::showParseDemo("Handle class definition: ", *pTc);
+
+      p_Repos-&gt;currentAccess() = Access::priv;
+
+      ASTNode* top = p_Repos-&gt;scopeStack().top();
+      size_t typeIndex = pTc-&gt;find("class");
+      if (typeIndex &lt; pTc-&gt;length())
+      {
+        size_t nameIndex = typeIndex + 1;
+        std::string name = (*pTc)[nameIndex];
+        top-&gt;type_ = "class";
+        top-&gt;name_ = name;
+        top-&gt;package_ = p_Repos-&gt;package();
+        p_Repos-&gt;AST().typeMap()[name] = top;
+        GrammarHelper::showParse("class def", *pTc);
+      }
+      else  // C#
+      {
+        typeIndex = pTc-&gt;find("interface");
+        size_t nameIndex = typeIndex + 1;
+        std::string name = (*pTc)[nameIndex];
+        top-&gt;type_ = "interface";
+        top-&gt;name_ = name;
+        top-&gt;package_ = p_Repos-&gt;package();
+        p_Repos-&gt;AST().typeMap()[name] = top;
+        GrammarHelper::showParse("interface def", *pTc);
+      }
+    </div>}}
+  </div>}};
+
+  ///////////////////////////////////////////////////////////////
+  // rule to detect struct statements
+
+  class StructDefinition : public IRule
+  {<button id ="10033"onclick="myFunction33();toggleText33(this.id);">-</button><div id="33">
+  public:
+    bool doTest(const Scanner::ITokCollection* pTc) override
+    {<button id ="10034"onclick="myFunction34();toggleText34(this.id);">-</button><div id="34">
+      GrammarHelper::showParseDemo("Test struct definition: ", *pTc);
+
+      const Scanner::ITokCollection& tc = *pTc;
+      if (tc[tc.length() - 1] == "{")
+      {
+        size_t len = tc.find("struct");
+        if (len &lt; tc.length())
+        {
+          doActions(pTc);
+          return IRule::Stop;
+        }
+      }
+      return IRule::Continue;
+    </div>}}
+  </div>}};
+
+  ///////////////////////////////////////////////////////////////
+  // action to add struct info to scope stack top
+
+  class HandleStructDefinition : public IAction
+  {<button id ="10035"onclick="myFunction35();toggleText35(this.id);">-</button><div id="35">
+    Repository* p_Repos;
+
+  public:
+    HandleStructDefinition(Repository* pRepos)
+    {<button id ="10036"onclick="myFunction36();toggleText36(this.id);">-</button><div id="36">
+      p_Repos = pRepos;
+    </div>}}
+    void doAction(const Scanner::ITokCollection* pTc) override
+    {<button id ="10037"onclick="myFunction37();toggleText37(this.id);">-</button><div id="37">
+      GrammarHelper::showParseDemo("Handle struct definition: ", *pTc);
+
+      p_Repos-&gt;currentAccess() = Access::publ;
+
+      ASTNode* top = p_Repos-&gt;scopeStack().top();
+
+      std::string name = (*pTc)[pTc-&gt;find("struct") + 1];
+      top-&gt;type_ = "struct";
+      top-&gt;name_ = name;
+      top-&gt;package_ = p_Repos-&gt;package();
+      p_Repos-&gt;AST().typeMap()[name] = top;
+
+      GrammarHelper::showParse("struct def", *pTc);
+    </div>}}
+  </div>}};
+
+  ///////////////////////////////////////////////////////////////
+  // rule to detect C++ function definitions
+
+  class CppFunctionDefinition : public IRule
+  {<button id ="10038"onclick="myFunction38();toggleText38(this.id);">-</button><div id="38">
+  public:
+    bool doTest(const Scanner::ITokCollection* pTc) override
+    {<button id ="10039"onclick="myFunction39();toggleText39(this.id);">-</button><div id="39">
+      Repository* pRepo = Repository::getInstance();
+      if (pRepo-&gt;language() != Language::Cpp)
+        return IRule::Continue;
+
+      GrammarHelper::showParseDemo("Test C++ function definition: ", *pTc);
+
+      const Scanner::ITokCollection& tc = *pTc;
+      std::string debug = pTc-&gt;show();
+
+      if (tc[tc.length() - 1] == "{")
+      {
+        if (GrammarHelper::isFunction(*pTc))
+        {
+          doActions(pTc);
+          return IRule::Stop;
+        }
+      }
+      return IRule::Continue;
+    </div>}}
+  </div>}};
+
+  ///////////////////////////////////////////////////////////////
+  // action to add function info to scope stack top
+
+  class HandleCppFunctionDefinition : public IAction
+  {<button id ="10040"onclick="myFunction40();toggleText40(this.id);">-</button><div id="40">
+    Repository* p_Repos;
+
+  public:
+    HandleCppFunctionDefinition(Repository* pRepos)
+    {<button id ="10041"onclick="myFunction41();toggleText41(this.id);">-</button><div id="41">
+      p_Repos = pRepos;
+    </div>}}
+    void doAction(const Scanner::ITokCollection* pTc) override
+    {<button id ="10042"onclick="myFunction42();toggleText42(this.id);">-</button><div id="42">
+      GrammarHelper::showParseDemo("Handle C++ function definition: ", *pTc);
+
+      //std::string debug = pTc-&gt;show();
+
+      ASTNode* top = p_Repos-&gt;scopeStack().top();
+
+      size_t nameIndex = pTc-&gt;find("(") - 1;
+      std::string name = (*pTc)[nameIndex];
+
+      // is function a destructor?
+
+      if (nameIndex &gt; 0 && (*pTc)[nameIndex - 1] == "~")
+      {
+        --nameIndex;
+        name = "~" + name;
+      }
+
+      top-&gt;type_ = "function";
+      top-&gt;name_ = name;
+      top-&gt;package_ = p_Repos-&gt;package();
+
+      GrammarHelper::showParse("function def", *pTc);
+
+      // is function an operator?
+
+      size_t operIndex = pTc-&gt;find("operator");
+      if (operIndex &lt; pTc-&gt;length())
+      {
+        name = "operator" + (*pTc)[operIndex + 1];// +(*pTc)[operIndex + 2];
+        if ((*pTc)[operIndex + 2] != "(")
+          name += (*pTc)[operIndex + 2];
+        top-&gt;name_ = name;
+        nameIndex = operIndex;
+      }
+      // is function a member of a class or struct?
+
+      if (nameIndex &gt; 1 && (*pTc)[nameIndex - 1] == "::")
+      {
+        //----&lt; start find class name &gt;--------------------
+
+        std::string className = (*pTc)[nameIndex - 2];
+
+        // is class a template?
+
+        if (className == "&gt;")
+        {
+          size_t startParam = GrammarHelper::findLast(*pTc, "&lt;");
+          if (0 &lt; startParam && startParam &lt; pTc-&gt;length())
+            className = (*pTc)[startParam - 1];
+        }
+        //----&lt; end find class name &gt;----------------------
+        /*
+        * - this function's ASTNode is at stack top
+        * - find ASTNode of function's class
+        * - unlink function ASTNode from stack top predecessor
+        * - relink function ASTNode to it's class ASTNode
+        * - leave function ASTNode on stack top as it may have child nodes
+        */
+        ASTNode* pClassNode = p_Repos-&gt;AST().find(className);
+        if (pClassNode == nullptr)
+          return;
+        ASTNode* pFunctNode = p_Repos-&gt;scopeStack().top();
+        ASTNode* pParentNode = p_Repos-&gt;scopeStack().predOfTop();
+        pParentNode-&gt;children_.pop_back();           // unlink function
+        pClassNode-&gt;children_.push_back(pFunctNode); // relink function
+        return;
+      }
+      // is this a lambda?
+
+      std::string packageName = p_Repos-&gt;package();
+      std::string ext = FileSystem::Path::getExt(packageName);
+
+      size_t posOpenBracket = pTc-&gt;find("[");
+      size_t posCloseBracket = pTc-&gt;find("]");
+      size_t posBrace = pTc-&gt;find("{");
+      if (posOpenBracket &lt; posCloseBracket && posBrace == (posCloseBracket + 1) && posBrace &lt; pTc-&gt;length())
+      {
+        std::string name;
+        for (size_t i = posOpenBracket; i &lt; posBrace; ++i)
+          name += (*pTc)[i];
+        top-&gt;name_ = name;
+        top-&gt;type_ = "lambda";
+      }
+    </div>}}
+  </div>}};
+
+  ///////////////////////////////////////////////////////////////
+  // rule to detect C# function definitions
+
+  class CSharpFunctionDefinition : public IRule
+  {<button id ="10043"onclick="myFunction43();toggleText43(this.id);">-</button><div id="43">
+  public:
+    bool doTest(const Scanner::ITokCollection* pTc) override
+    {<button id ="10044"onclick="myFunction44();toggleText44(this.id);">-</button><div id="44">
+      //std::string debug = pTc-&gt;show();
+
+      Repository* pRepo = Repository::getInstance();
+      if (pRepo-&gt;language() != Language::CSharp)
+        return IRule::Continue;
+
+      GrammarHelper::showParseDemo("Test C# function definition: ", *pTc);
+
+      const Scanner::ITokCollection& tc = *pTc;
+      if (tc[tc.length() - 1] == "{")
+      {
+        Scanner::SemiExp se;
+        for (size_t i = 0; i &lt; tc.length(); ++i)
+          se.push_back(tc[i]);
+
+        if (GrammarHelper::isFunction(se))
+        {
+          std::string debug = se.show();
+          doActions(&se);
+          return IRule::Stop;
+        }
+      }
+      return IRule::Continue;
+    </div>}}
+  </div>}};
+
+  ///////////////////////////////////////////////////////////////
+  // action to add function info to scope stack top
+
+  class HandleCSharpFunctionDefinition : public IAction
+  {<button id ="10045"onclick="myFunction45();toggleText45(this.id);">-</button><div id="45">
+    Repository* p_Repos;
+
+  public:
+    HandleCSharpFunctionDefinition(Repository* pRepos)
+    {<button id ="10046"onclick="myFunction46();toggleText46(this.id);">-</button><div id="46">
+      p_Repos = pRepos;
+    </div>}}
+    void doAction(const Scanner::ITokCollection* pTc) override
+    {<button id ="10047"onclick="myFunction47();toggleText47(this.id);">-</button><div id="47">
+      GrammarHelper::showParseDemo("Handle C# function definition: ", *pTc);
+
+      std::string debug = pTc-&gt;show();
+      ASTNode* top = p_Repos-&gt;scopeStack().top();
+
+      size_t nameIndex = pTc-&gt;find("(") - 1;
+      std::string name = (*pTc)[nameIndex];
+
+      // is function a destructor?
+
+      if (nameIndex &gt; 0 && (*pTc)[nameIndex - 1] == "~")
+      {
+        --nameIndex;
+        name = "~" + name;
+      }
+
+      top-&gt;type_ = "function";
+      top-&gt;name_ = name;
+      top-&gt;package_ = p_Repos-&gt;package();
+
+      GrammarHelper::showParse("function def", *pTc);
+
+      // is function an operator?
+
+      size_t operIndex = pTc-&gt;find("operator");
+      if (operIndex &lt; pTc-&gt;length())
+      {
+        name = "operator" + (*pTc)[operIndex + 1] + (*pTc)[operIndex + 2];
+        top-&gt;name_ = name;
+        nameIndex = operIndex;
+      }
+
+      // is lambda?
+
+      size_t posParen = pTc-&gt;find("(");
+      size_t posBrace = pTc-&gt;find("{");
+      size_t posEqual = pTc-&gt;find("=");
+      if (posParen &lt; posBrace && posBrace &lt; pTc-&gt;length())
+      {
+        if (posEqual &lt; pTc-&gt;length() - 1 && (*pTc)[posEqual + 1] == "&gt;")
+        {
+          std::string name;
+          for (size_t i = posParen; i &lt;= posBrace; ++i)
+            name += (*pTc)[i];
+          top-&gt;name_ = name;
+          top-&gt;type_ = "lambda";
+        }
+      }
+    </div>}}
+  </div>}};
+
+  ///////////////////////////////////////////////////////////////
+  // rule to detect control definitions
+
+  class ControlDefinition : public IRule
+  {<button id ="10048"onclick="myFunction48();toggleText48(this.id);">-</button><div id="48">
+  public:
+    bool doTest(const Scanner::ITokCollection* pTc) override
+    {<button id ="10049"onclick="myFunction49();toggleText49(this.id);">-</button><div id="49">
+      GrammarHelper::showParseDemo("Test control definition: ", *pTc);
+
+      const Scanner::ITokCollection& tc = *pTc;
+      if (tc[tc.length() - 1] == "{")
+      {
+        size_t len = tc.find("(");
+        if (len &lt; tc.length() && GrammarHelper::isControlKeyWord(tc[len - 1]))
+        {
+          doActions(pTc);
+          return IRule::Stop;
+        }
+        else if (tc.length() &gt; 1 && GrammarHelper::isControlKeyWord(tc[tc.length() - 2]))
+        {
+          // shouldn't need this scope since all semiExps have been trimmed
+          doActions(pTc);
+          return IRule::Stop;
+        }
+      }
+      return IRule::Continue;
+    </div>}}
+  </div>}};
+
+  ///////////////////////////////////////////////////////////////
+  // action to add control info to scope stack top
+
+  class HandleControlDefinition : public IAction
+  {<button id ="10050"onclick="myFunction50();toggleText50(this.id);">-</button><div id="50">
+    Repository* p_Repos;
+
+  public:
+    HandleControlDefinition(Repository* pRepos)
+    {<button id ="10051"onclick="myFunction51();toggleText51(this.id);">-</button><div id="51">
+      p_Repos = pRepos;
+    </div>}}
+    void doAction(const Scanner::ITokCollection* pTc) override
+    {<button id ="10052"onclick="myFunction52();toggleText52(this.id);">-</button><div id="52">
+      GrammarHelper::showParseDemo("Handle control definition: ", *pTc);
+
+      ASTNode* top = p_Repos-&gt;scopeStack().top();
+
+      size_t nameIndex = pTc-&gt;find("(") - 1;  // if, for, while, switch, catch
+      if (nameIndex == pTc-&gt;length() - 1)     // do, try - they don't have parens
+        nameIndex = pTc-&gt;length() - 2;
+      std::string name = (*pTc)[nameIndex];
+      top-&gt;type_ = "control";
+      top-&gt;name_ = name;
+
+      GrammarHelper::showParse("control def", *pTc);
+    </div>}}
+  </div>}};
+
+  ///////////////////////////////////////////////////////////////
+  // action to send semi-expression that starts a function def
+  // to console
+
+  class PrintFunction : public IAction
+  {<button id ="10053"onclick="myFunction53();toggleText53(this.id);">-</button><div id="53">
+    Repository* p_Repos;
+  public:
+    using Rslt = Logging::StaticLogger&lt;0&gt;;
+
+    PrintFunction(Repository* pRepos)
+    {<button id ="10054"onclick="myFunction54();toggleText54(this.id);">-</button><div id="54">
+      p_Repos = pRepos;
+    </div>}}
+    void doAction(const Scanner::ITokCollection* pTc) override
+    {<button id ="10055"onclick="myFunction55();toggleText55(this.id);">-</button><div id="55">
+      std::ostringstream out;
+      out &lt;&lt; "\n  FuncDef: " &lt;&lt; pTc-&gt;show().c_str();
+      Rslt::write(out.str());
+    </div>}}
+  </div>}};
+
+  ///////////////////////////////////////////////////////////////
+  // action to send signature of a function def to console
+
+  class PrettyPrintFunction : public IAction
+  {<button id ="10056"onclick="myFunction56();toggleText56(this.id);">-</button><div id="56">
+    Repository* p_Repos;
+  public:
+    using Rslt = Logging::StaticLogger&lt;0&gt;;
+
+    PrettyPrintFunction(Repository* pRepos) : p_Repos(pRepos) {}
+
+    void doAction(const Scanner::ITokCollection* pTc) override
+    {<button id ="10057"onclick="myFunction57();toggleText57(this.id);">-</button><div id="57">
+      size_t len = pTc-&gt;find(")");
+
+      std::ostringstream out;
+      out &lt;&lt; "\n\n  Pretty Stmt:    ";
+      for (size_t i = 0; i &lt; len + 1; ++i)
+        out &lt;&lt; (*pTc)[i] &lt;&lt; " ";
+      out &lt;&lt; "\n";
+      Rslt::write(out.str());
+    </div>}}
+  </div>}};
+
+  ///////////////////////////////////////////////////////////////
+  // rule to detect C++ Declaration
+  /*
+  *  - Declaration ends in semicolon
+  *  - has type, name, modifiers & initializers
+  *  So:
+  *  - strip off modifiers and initializers
+  *  - if you have two things left it's a declar, else executable
+  */
+  class CppDeclaration : public IRule
+  {<button id ="10058"onclick="myFunction58();toggleText58(this.id);">-</button><div id="58">
+  public:
+    bool doTest(const Scanner::ITokCollection* pTc) override
+    {<button id ="10059"onclick="myFunction59();toggleText59(this.id);">-</button><div id="59">
+      Repository* pRepo = Repository::getInstance();
+      if (pRepo-&gt;language() != Language::Cpp)
+        return IRule::Continue;
+
+      GrammarHelper::showParseDemo("Test C++ declaration: ", *pTc);
+      std::string debug3 = pTc-&gt;show();
+
+      Scanner::SemiExp tc;
+      tc.clone(*pTc);
+
+      // begin added 2/26/2017
+
+      Access access = pRepo-&gt;currentAccess();
+      bool isPublic = false;
+      std::string parentType = pRepo-&gt;scopeStack().top()-&gt;type_;
+
+      if (pTc-&gt;find("private") &lt; pTc-&gt;length())
+      {
+        isPublic = false;
+        pRepo-&gt;currentAccess() = Access::priv;
+      }
+
+      if (pTc-&gt;find("protected") &lt; pTc-&gt;length())
+      {
+        isPublic = false;
+        pRepo-&gt;currentAccess() = Access::prot;
+      }
+
+      if (pTc-&gt;find("public") &lt; pTc-&gt;length() && parentType != "function")
+      {
+        isPublic = true;
+        pRepo-&gt;currentAccess() = Access::publ;
+      }
+
+      // end added 2/26/2017
+
+      if (tc.length() &gt; 0 && tc[0] == "using")
+      {
+        doActions(pTc);
+        return IRule::Stop;
+      }
+
+      std::string debug = tc.show();
+      
+      if (tc[tc.length() - 1] == ";" && tc.length() &gt; 2)
+      {
+        std::string nextToLast = tc[tc.length() - 2];
+        if (nextToLast == "delete" || nextToLast == "default" || nextToLast == "const")
+        {
+          {
+            // function declaration
+            doActions(pTc);
+            return IRule::Stop;
+          }
+        }
+        std::string parentType = pRepo-&gt;scopeStack().top()-&gt;type_;
+        
+        if (GrammarHelper::isDataDeclaration(tc) || GrammarHelper::isFunctionDeclaration(tc, parentType))
+        {
+          doActions(pTc);
+          return IRule::Stop;
+        }
+
+        if (parentType != "function")
+        {
+          // can't be executable so must be declaration
+
+          doActions(pTc);
+          return IRule::Stop;
+        }
+      }
+      return IRule::Continue;
+    </div>}}
+  </div>}};
+
+  ///////////////////////////////////////////////////////////////
+  // action to add declaration info to scope stack top
+
+  class HandleCppDeclaration : public IAction
+  {<button id ="10060"onclick="myFunction60();toggleText60(this.id);">-</button><div id="60">
+    Repository* p_Repos;
+
+  public:
+    HandleCppDeclaration(Repository* pRepos) : p_Repos(pRepos) {}
+
+    void doAction(const Scanner::ITokCollection* pTc) override
+    {<button id ="10061"onclick="myFunction61();toggleText61(this.id);">-</button><div id="61">
+      GrammarHelper::showParseDemo("Handle C++ declaration: ", *pTc);
+
+      // save declaration info in ASTNode
+
+      ASTNode* pCurrNode = p_Repos-&gt;scopeStack().top();
+      DeclarationNode declNode;
+      declNode.access_ = p_Repos-&gt;currentAccess();
+      declNode.pTc = pTc-&gt;clone();
+      declNode.package_ = p_Repos-&gt;package();
+      declNode.line_ = p_Repos-&gt;lineCount();
+
+      Scanner::SemiExp se;
+      se.clone(*pTc);
+      GrammarHelper::removeComments(se);
+
+      if (se[0] == "using")
+      {
+        declNode.declType_ = DeclType::usingDecl;
+        pCurrNode-&gt;decl_.push_back(declNode);
+
+        GrammarHelper::showParse("using declar", *pTc);
+        return;
+      }
+
+      if (GrammarHelper::isFunctionDeclaration(se,"parentNotFunction"))
+      {
+        return;
+      }
+
+      if (GrammarHelper::isDataDeclaration(se))
+      {
+        declNode.declType_ = DeclType::dataDecl;
+        pCurrNode-&gt;decl_.push_back(declNode);
+        GrammarHelper::showParse("data declar", *pTc);
+      }
+    </div>}}
+  </div>}};
+
+  ///////////////////////////////////////////////////////////////
+  // rule to detect C# Declaration
+  /*
+  *  - Declaration ends in semicolon
+  *  - has type, name, modifiers & initializers
+  *  So:
+  *  - strip of modifiers and initializers
+  *  - if you have two things left it's a declar, else executable
+  */
+  class CSharpDeclaration : public IRule
+  {<button id ="10062"onclick="myFunction62();toggleText62(this.id);">-</button><div id="62">
+  public:
+    bool doTest(const Scanner::ITokCollection* pTc) override
+    {<button id ="10063"onclick="myFunction63();toggleText63(this.id);">-</button><div id="63">
+      Repository* pRepo = Repository::getInstance();
+      if (pRepo-&gt;language() != Language::CSharp)
+        return IRule::Continue;
+
+      GrammarHelper::showParseDemo("Test C# declaration: ", *pTc);
+
+      std::string debug = pTc-&gt;show();
+      
+      Access access = pRepo-&gt;currentAccess();
+      bool isPublic = false;
+      std::string parentType = pRepo-&gt;scopeStack().top()-&gt;type_;
+
+      if (pTc-&gt;find("public") &lt; pTc-&gt;length() && parentType != "function")
+      {
+        isPublic = true;
+        pRepo-&gt;currentAccess() = Access::publ;
+      }
+
+      const Scanner::ITokCollection& tc = *pTc;
+      if (tc.length() &gt; 0 && tc[0] == "using")
+      {
+        doActions(pTc);
+        pRepo-&gt;currentAccess() = access;
+        return IRule::Stop;
+      }
+
+      Scanner::SemiExp se;
+      se.clone(*pTc);
+
+      if (GrammarHelper::isDataDeclaration(se))
+      {
+        doActions(pTc);
+        pRepo-&gt;currentAccess() = access;
+        return IRule::Stop;
+      }
+
+      if (GrammarHelper::isFunctionDeclaration(se, parentType))
+      {
+        doActions(pTc);
+        pRepo-&gt;currentAccess() = access;
+        return IRule::Stop;
+      }
+      return IRule::Continue;
+    </div>}}
+  </div>}};
+
+  ///////////////////////////////////////////////////////////////
+  // action to add declaration info to scope stack top
+
+  class HandleCSharpDeclaration : public IAction
+  {<button id ="10064"onclick="myFunction64();toggleText64(this.id);">-</button><div id="64">
+    Repository* p_Repos;
+
+  public:
+    HandleCSharpDeclaration(Repository* pRepos) : p_Repos(pRepos) {}
+
+    void doAction(const Scanner::ITokCollection* pTc) override
+    {<button id ="10065"onclick="myFunction65();toggleText65(this.id);">-</button><div id="65">
+      GrammarHelper::showParseDemo("Handle C# declaration: ", *pTc);
+
+      // store declaration info in ASTNode
+
+      ASTNode* pCurrNode = p_Repos-&gt;scopeStack().top();
+      DeclarationNode declNode;
+      declNode.access_ = p_Repos-&gt;currentAccess();
+      declNode.pTc = pTc-&gt;clone();
+      declNode.package_ = p_Repos-&gt;package();
+      declNode.line_ = p_Repos-&gt;lineCount();
+
+      Scanner::SemiExp se;
+      se.clone(*pTc);
+      GrammarHelper::removeComments(se);
+
+      if (se[0] == "using")
+      {
+        declNode.declType_ = DeclType::usingDecl;
+        pCurrNode-&gt;decl_.push_back(declNode);
+
+        GrammarHelper::showParse("using declar", *pTc);
+        return;
+      }
+      //std::string debug = se.show();
+
+      std::string parentType = p_Repos-&gt;scopeStack().top()-&gt;type_;
+
+      if (GrammarHelper::isFunctionDeclaration(se, parentType))
+      {
+        std::string debug = se.show();
+        Access adebug = declNode.access_;
+        declNode.declType_ = DeclType::functionDecl;
+        pCurrNode-&gt;decl_.push_back(declNode);
+        GrammarHelper::showParse("function declar", *pTc);
+      }
+      else
+      {
+        std::string debug = se.show();
+        Access adebug = declNode.access_;
+        declNode.declType_ = DeclType::dataDecl;
+        pCurrNode-&gt;decl_.push_back(declNode);
+        GrammarHelper::showParse("data declar", *pTc);
+      }
+    </div>}}
+  </div>}};
+
+  ///////////////////////////////////////////////////////////////
+  // rule to detect C++ Executable
+
+  class CppExecutable : public IRule
+  {<button id ="10066"onclick="myFunction66();toggleText66(this.id);">-</button><div id="66">
+  public:
+    bool doTest(const Scanner::ITokCollection* pTc) override
+    {<button id ="10067"onclick="myFunction67();toggleText67(this.id);">-</button><div id="67">
+      Repository* pRepo = Repository::getInstance();
+      if (pRepo-&gt;language() != Language::Cpp)
+        return IRule::Continue;
+
+      GrammarHelper::showParseDemo("Test C++ executable: ", *pTc);
+
+      Scanner::SemiExp tc;
+      tc.clone(*pTc);
+
+      if (tc[tc.length() - 1] == ";" && tc.length() &gt; 2)
+      {
+        GrammarHelper::removeFunctionArgs(tc);
+        GrammarHelper::condenseTemplateTypes(tc);
+
+        // remove modifiers, comments, newlines, returns, and initializers
+
+        Scanner::SemiExp se;
+        for (size_t i = 0; i &lt; tc.length(); ++i)
+        {
+          if (GrammarHelper::isQualifierKeyWord(tc[i]))
+            continue;
+          if (se.isComment(tc[i]) || tc[i] == "\n" || tc[i] == "return")
+            continue;
+          if (tc[i] == "=" || tc[i] == ";")
+          {
+            se.push_back(";");
+            break;
+          }
+          else
+            se.push_back(tc[i]);
+        }
+        if (se.length() != 3)  // not a declaration
+        {
+          doActions(pTc);
+          return IRule::Stop;
+        }
+      }
+      return IRule::Continue;
+    </div>}}
+  </div>}};
+
+  ///////////////////////////////////////////////////////////////
+  // action to display C++ executable info
+
+  class HandleCppExecutable : public IAction
+  {<button id ="10068"onclick="myFunction68();toggleText68(this.id);">-</button><div id="68">
+    Repository* p_Repo;
+
+  public:
+    HandleCppExecutable(Repository* pRepo) : p_Repo(pRepo) {}
+
+    void doAction(const Scanner::ITokCollection* pTc) override
+    {<button id ="10069"onclick="myFunction69();toggleText69(this.id);">-</button><div id="69">
+      GrammarHelper::showParseDemo("Handle C++ executable: ", *pTc);
+
+      GrammarHelper::showParse("executable", *pTc);
+    </div>}}
+  </div>}};
+  ///////////////////////////////////////////////////////////////
+  // rule to detect C# Executable
+
+  class CSharpExecutable : public IRule
+  {<button id ="10070"onclick="myFunction70();toggleText70(this.id);">-</button><div id="70">
+  public:
+    bool doTest(const Scanner::ITokCollection* pTc) override
+    {<button id ="10071"onclick="myFunction71();toggleText71(this.id);">-</button><div id="71">
+      Repository* pRepo = Repository::getInstance();
+      if (pRepo-&gt;language() != Language::CSharp)
+        return IRule::Continue;
+
+      GrammarHelper::showParseDemo("Test C# executable: ", *pTc);
+
+      const Scanner::ITokCollection& in = *pTc;
+      Scanner::SemiExp tc;
+      for (size_t i = 0; i &lt; in.length(); ++i)
+        tc.push_back(in[i]);
+
+      if (tc[tc.length() - 1] == ";" && tc.length() &gt; 2)
+      {
+        GrammarHelper::removeFunctionArgs(tc);
+        GrammarHelper::condenseTemplateTypes(tc);
+
+        // remove modifiers, comments, newlines, returns, and initializers
+
+        Scanner::SemiExp se;
+        for (size_t i = 0; i &lt; tc.length(); ++i)
+        {
+          if (GrammarHelper::isQualifierKeyWord(tc[i]))
+            continue;
+          if (se.isComment(tc[i]) || tc[i] == "\n" || tc[i] == "return")
+            continue;
+          if (tc[i] == "=" || tc[i] == ";")
+          {
+            se.push_back(";");
+            break;
+          }
+          else
+            se.push_back(tc[i]);
+        }
+        if (se.length() != 3)  // not a declaration
+        {
+          doActions(pTc);
+          return IRule::Stop;
+        }
+      }
+      return IRule::Continue;
+    </div>}}
+  </div>}};
+  ///////////////////////////////////////////////////////////////
+  // action to display C# executable info
+
+  class HandleCSharpExecutable : public IAction
+  {<button id ="10072"onclick="myFunction72();toggleText72(this.id);">-</button><div id="72">
+    Repository* p_Repo;
+
+  public:
+    HandleCSharpExecutable(Repository* pRepo) : p_Repo(pRepo) {}
+
+    void doAction(const Scanner::ITokCollection* pTc) override
+    {<button id ="10073"onclick="myFunction73();toggleText73(this.id);">-</button><div id="73">
+      GrammarHelper::showParseDemo("Handle C# executable: ", *pTc);
+
+      Scanner::SemiExp se;
+      se.clone(*pTc);
+      GrammarHelper::removeComments(se);
+
+      GrammarHelper::showParse("executable", se);
+    </div>}}
+  </div>}};
+  ///////////////////////////////////////////////////////////////
+  // default rule
+  // - this is here to catch any SemiExp that didn't parse
+  // - We don't have rule for enums, so they are caugth here
+
+  class Default : public IRule
+  {<button id ="10074"onclick="myFunction74();toggleText74(this.id);">-</button><div id="74">
+  public:
+    bool doTest(const Scanner::ITokCollection* pTc) override
+    {<button id ="10075"onclick="myFunction75();toggleText75(this.id);">-</button><div id="75">
+      GrammarHelper::showParseDemo("Test default: ", *pTc);
+
+      doActions(pTc);  // catches everything
+      return IRule::Stop;
+    </div>}}
+  </div>}};
+  ///////////////////////////////////////////////////////////////
+  // action to display default info
+
+  /*class HandleDefault : public IAction
+  {
+    Repository* p_Repo;
+
+  public:
+    HandleDefault(Repository* pRepo) : p_Repo(pRepo) {}
+
+    void doAction(const Scanner::ITokCollection* pTc) override
+    {
+      GrammarHelper::showParseDemo("Handle default: ", *pTc);
+      GrammarHelper::showParse("default: ", *pTc);
+    }
+  };*/
+  class HandleDefault : public IAction
+  {<button id ="10076"onclick="myFunction76();toggleText76(this.id);">-</button><div id="76">
+	  Repository* p_Repo;
+  public:
+	  HandleDefault(Repository* pRepo) : p_Repo(pRepo) {}
+	  void doAction(const Scanner::ITokCollection* pTc) override
+	  {<button id ="10077"onclick="myFunction77();toggleText77(this.id);">-</button><div id="77">
+		  GrammarHelper::showParseDemo("Handle default: ", *pTc);
+		  GrammarHelper::showParse("default: ", *pTc);
+		  ASTNode* top = p_Repo-&gt;scopeStack().top();
+		  std::string a = pTc-&gt;show();
+		  size_t i = pTc-&gt;find("enum");
+		  if (i == 0 && top-&gt;name_ == "none" && top-&gt;type_ == "anonymous")
+		  {
+			  i = pTc-&gt;find("enum");
+			  i++;
+			  std::string n = (*pTc)[i];
+			  top-&gt;type_ = "enum";
+			  top-&gt;name_ = n;
+		  }
+	  </div>}}
+  </div>}};
+}
+#endif</PRE> </body> </html>
